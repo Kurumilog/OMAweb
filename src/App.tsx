@@ -6,6 +6,7 @@ import { HomePage } from './components/HomePage';
 import { TaskPage } from './components/TaskPage';
 import { ProductPage } from './components/ProductPage';
 import { MasterPage } from './components/MasterPage';
+import { CartPage } from './components/CartPage';
 import { ProfilePanel } from './components/ProfilePanel';
 import { CartDrawer } from './components/CartDrawer';
 import { FloatingCartButton } from './components/FloatingCartButton';
@@ -97,7 +98,8 @@ export const AppContent: React.FC = () => {
   };
 
   const openCart = () => {
-    setIsCartOpen(true);
+    setActiveView('cart');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const openLoyalty = () => {
@@ -149,6 +151,17 @@ export const AppContent: React.FC = () => {
             initialProducts={masterProducts}
             onBackToCatalog={handleGoHome}
             onOpenProduct={openProduct}
+          />
+        </main>
+      ) : activeView === 'cart' ? (
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+          <CartPage
+            onBackToCatalog={handleGoCatalog}
+            onProceedToOrder={() => {
+              setActiveView('order-cabinet');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onSelectProduct={openProduct}
           />
         </main>
       ) : activeView === 'product' && activeProduct ? (
@@ -227,7 +240,7 @@ export const AppContent: React.FC = () => {
       )}
 
       <CartDrawer onOpenMaster={openMaster} />
-      <FloatingCartButton onGoToMaster={() => openMaster()} />
+      <FloatingCartButton onGoToMaster={() => openMaster()} onOpenCart={openCart} />
       <MobileBottomNav
         onGoHome={handleGoHome}
         onScrollToCatalog={scrollToCatalog}

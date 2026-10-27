@@ -5,9 +5,10 @@ import { formatBYN } from '../config/loyalty';
 
 interface FloatingCartButtonProps {
   onGoToMaster?: () => void;
+  onOpenCart?: () => void;
 }
 
-export const FloatingCartButton: React.FC<FloatingCartButtonProps> = ({ onGoToMaster }) => {
+export const FloatingCartButton: React.FC<FloatingCartButtonProps> = ({ onGoToMaster, onOpenCart }) => {
   const { items, isCartOpen, setIsCartOpen, grandTotal, servicesTotal } = useCart();
 
   if (items.length === 0 || isCartOpen) return null;
@@ -15,10 +16,18 @@ export const FloatingCartButton: React.FC<FloatingCartButtonProps> = ({ onGoToMa
   const totalProducts = items.reduce((sum, item) => sum + item.quantity, 0);
   const installCount = items.filter((item) => Boolean(item.installService)).length;
 
+  const handleClick = () => {
+    if (onOpenCart) {
+      onOpenCart();
+    } else {
+      setIsCartOpen(true);
+    }
+  };
+
   return (
     <div className="fixed bottom-18 md:bottom-6 right-4 sm:right-6 z-40 animate-in fade-in slide-in-from-bottom-4 duration-200">
       <button
-        onClick={() => setIsCartOpen(true)}
+        onClick={handleClick}
         className="group bg-oma-text hover:bg-oma-blue text-white rounded-2xl p-3.5 sm:px-5 sm:py-3.5 shadow-xl border border-white/10 flex items-center space-x-3.5 transition-all cursor-pointer"
       >
         <div className="relative w-10 h-10 rounded-xl bg-oma-blue group-hover:bg-white/20 flex items-center justify-center transition-colors shrink-0">
