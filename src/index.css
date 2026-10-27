@@ -13,16 +13,17 @@
   --color-oma-text-secondary: #6E6E73;
   --color-oma-text-tertiary: #9A9BA1;
   --color-oma-bonus: #005DD6;
-  --color-oma-success: #111111;
-  --color-oma-warning: #6E6E73;
-  --color-oma-error: #111111;
-  --color-oma-discount: #005DD6;
+  --color-oma-success: #2D8B5D;
+  --color-oma-warning: #BD5C0A;
+  --color-oma-error: #BD0935;
+  --color-oma-discount: #111111;
   --color-oma-price-old: #9A9BA1;
 
   --radius-s: 8px;
   --radius-m: 12px;
   --radius-l: 16px;
   --radius-xl: 20px;
+  --radius-2xl: 24px;
   --radius-pill: 999px;
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
@@ -41,6 +42,33 @@
   --text: #111111;
   --text-secondary: #6E6E73;
   --text-tertiary: #9A9BA1;
+}
+
+/* Gravity UI OMA Theme overrides based on 00 Foundations */
+.g-root_theme_light {
+  --g-color-base-brand: #005DD6;
+  --g-color-base-brand-hover: #004EB8;
+  --g-color-base-selection: #EDF4FF;
+  --g-color-base-selection-hover: #DCEAFF;
+  --g-color-text-brand: #005DD6;
+  --g-color-text-brand-heavy: #004099;
+  --g-color-text-brand-contrast: #FFFFFF;
+  --g-color-text-link: #005DD6;
+  --g-color-text-link-hover: #004EB8;
+  --g-color-line-brand: #005DD6;
+  --g-color-text-primary: #111111;
+  --g-color-text-secondary: #6E6E73;
+  --g-color-text-hint: #9A9BA1;
+  --g-color-base-background: #FFFFFF;
+  --g-color-base-generic: #ECEDF0;
+  --g-color-base-generic-hover: #E2E4E8;
+  --g-color-line-generic: #E2E4E8;
+  --g-color-line-generic-solid: #E2E4E8;
+  --g-border-radius-xs: 4px;
+  --g-border-radius-s: 8px;
+  --g-border-radius-m: 12px;
+  --g-border-radius-l: 16px;
+  --g-border-radius-xl: 20px;
 }
 
 body {

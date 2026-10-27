@@ -9,11 +9,21 @@ import { CartDrawer } from './components/CartDrawer';
 import { FloatingCartButton } from './components/FloatingCartButton';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
-import { CartProvider } from './context/CartContext';
+import { CartProvider, useCart } from './context/CartContext';
 import { UserProvider } from './context/UserContext';
 import { Product } from './types';
 
-type View = 'catalog' | 'product' | 'master';
+export type View =
+  | 'home'
+  | 'catalog'
+  | 'product'
+  | 'master'
+  | 'service'
+  | 'application'
+  | 'order-cabinet'
+  | 'cart'
+  | 'loyalty'
+  | 'task';
 
 export const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState<View>('catalog');
@@ -22,11 +32,18 @@ export const AppContent: React.FC = () => {
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [masterProducts, setMasterProducts] = useState<Product[] | undefined>();
   const [profileOpen, setProfileOpen] = useState(false);
+  const { setIsCartOpen } = useCart();
 
   const handleGoHome = () => {
     setActiveView('catalog');
     setSelectedCategory('all');
     setSearchQuery('');
+    setActiveProduct(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleGoCatalog = () => {
+    setActiveView('catalog');
     setActiveProduct(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -49,6 +66,14 @@ export const AppContent: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const openCart = () => {
+    setIsCartOpen(true);
+  };
+
+  const openLoyalty = () => {
+    setProfileOpen(true);
+  };
+
   const scrollToCatalog = () => {
     if (activeView !== 'catalog') {
       setActiveView('catalog');
@@ -63,17 +88,20 @@ export const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-oma-bg text-oma-text">
+    <div className="min-h-screen flex flex-col bg-[#F4F4F6] text-[#111111]">
       <Header
         onSearch={handleSearch}
         onGoHome={handleGoHome}
+        onGoCatalog={handleGoCatalog}
         activeView={activeView}
         onOpenMaster={() => openMaster()}
         onOpenProfile={() => setProfileOpen(true)}
+        onOpenLoyalty={openLoyalty}
+        onOpenCart={openCart}
       />
 
       {activeView === 'master' ? (
-        <main className="flex-1 max-w-[1360px] w-full mx-auto px-4 py-6">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
           <MasterPage
             initialProducts={masterProducts}
             onBackToCatalog={handleGoHome}
@@ -81,7 +109,7 @@ export const AppContent: React.FC = () => {
           />
         </main>
       ) : activeView === 'product' && activeProduct ? (
-        <main className="flex-1 max-w-[1360px] w-full mx-auto px-4 py-6">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
           <ProductPage
             product={activeProduct}
             onBack={handleGoHome}
@@ -90,10 +118,10 @@ export const AppContent: React.FC = () => {
           />
         </main>
       ) : (
-        <main className="flex-1 max-w-[1360px] w-full mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6 items-start">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8 flex flex-col lg:flex-row gap-6 items-start">
           <SidebarCatalog
             selectedCategory={selectedCategory}
-            activeView={activeView}
+            activeView="catalog"
             onSelectCategory={(catId) => {
               setSelectedCategory(catId);
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -119,10 +147,15 @@ export const AppContent: React.FC = () => {
         onScrollToCatalog={scrollToCatalog}
         onOpenMaster={() => openMaster()}
         onOpenProfile={() => setProfileOpen(true)}
-        activeView={activeView}
+        activeView={activeView === 'master' ? 'master' : 'catalog'}
       />
       <ProfilePanel open={profileOpen} onClose={() => setProfileOpen(false)} />
-      <Footer />
+      <Footer
+        onGoHome={handleGoHome}
+        onGoCatalog={handleGoCatalog}
+        onOpenMaster={() => openMaster()}
+        onOpenLoyalty={openLoyalty}
+      />
     </div>
   );
 };
