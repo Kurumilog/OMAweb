@@ -46,3 +46,7 @@ export function formatBYN(amount: number): string {
 export function formatPoints(points: number): string {
   return `${Math.round(points)} Б`;
 }
+
+export function calculateBonusPoints(amount: number): number {
+  return Math.max(1, Math.round(amount * BONUS_RATE_GOODS));
+}

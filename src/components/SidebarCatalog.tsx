@@ -1,18 +1,19 @@
 import React from 'react';
 import {
   LayoutGrid,
+  Droplets,
   PaintRoller,
   BrickWall,
-  Wrench,
-  Droplets,
   Lightbulb,
+  Wrench,
   Hammer,
   Armchair,
-  Home,
   Settings,
+  Home,
   Trees,
   ChevronRight,
 } from 'lucide-react';
+import { Checkbox } from '@gravity-ui/uikit';
 
 export interface CategoryMeta {
   id: string;
@@ -131,46 +132,59 @@ export const CATALOG_CATEGORIES: CategoryMeta[] = [
   },
 ];
 
+const POPULAR_BRANDS = ['WISENT', 'GROHE', 'Cersanit', 'Tarkett', 'Knauf', 'BOSCH'];
+
 interface SidebarCatalogProps {
   selectedCategory: string;
-  activeView: 'catalog' | 'master' | 'product';
+  activeView: string;
   onSelectCategory: (categoryId: string) => void;
   onOpenMaster?: () => void;
+  maxPrice?: number;
+  onMaxPriceChange?: (price: number | undefined) => void;
+  selectedBrands?: string[];
+  onToggleBrand?: (brand: string) => void;
+  onlyWithInstallation?: boolean;
+  onToggleOnlyInstallation?: () => void;
 }
 
 export const SidebarCatalog: React.FC<SidebarCatalogProps> = ({
   selectedCategory,
   activeView,
   onSelectCategory,
+  maxPrice,
+  onMaxPriceChange,
+  selectedBrands = [],
+  onToggleBrand,
+  onlyWithInstallation = false,
+  onToggleOnlyInstallation,
 }) => {
   return (
-    <aside className="w-full lg:w-64 shrink-0 space-y-3">
-      {/* Catalog Categories Card */}
-      <div className="bg-white rounded-2xl border border-oma-border shadow-card overflow-hidden sticky top-20">
-        {/* Sidebar Header */}
-        <div className="bg-oma-surface-alt text-oma-text px-4 py-3.5 flex items-center space-x-2.5 border-b border-oma-border">
-          <LayoutGrid className="w-4 h-4 text-oma-blue shrink-0" />
-          <span className="font-bold text-xs uppercase tracking-wider">Весь каталог</span>
+    <aside className="w-full lg:w-[290px] shrink-0 space-y-4">
+      {/* 1. Карточка категорий каталога (290 px) — Figma node 51011:80300 */}
+      <div className="bg-white rounded-[20px] border border-[#E2E4E8] p-4 shadow-sm">
+        <div className="text-[13px] font-medium leading-[18px] text-[#6E6E73] mb-3 px-2">
+          Категории каталога
         </div>
 
-        {/* Desktop Vertical List */}
-        <nav className="hidden lg:flex flex-col divide-y divide-oma-border/60">
+        {/* Вертикальный список 11 категорий */}
+        <nav className="flex flex-col space-y-1">
           {CATALOG_CATEGORIES.map((cat) => {
             const isActive = activeView === 'catalog' && selectedCategory === cat.id;
             return (
               <button
                 key={cat.id}
+                type="button"
                 onClick={() => onSelectCategory(cat.id)}
-                className={`w-full px-4 py-3 text-left flex items-center justify-between transition-colors cursor-pointer group ${
+                className={`w-full h-[40px] px-3 rounded-[12px] text-left flex items-center justify-between transition-colors cursor-pointer group ${
                   isActive
-                    ? 'bg-oma-blue-tint text-oma-blue font-semibold'
-                    : 'bg-white hover:bg-oma-bg text-oma-text font-normal'
+                    ? 'bg-[#EDF4FF] text-[#005DD6] font-medium'
+                    : 'bg-white hover:bg-[#F4F4F6] text-[#111111]'
                 }`}
               >
-                <div className="flex items-center space-x-3 min-w-0">
+                <div className="flex items-center space-x-2.5 min-w-0">
                   <span
-                    className={`shrink-0 transition-colors ${
-                      isActive ? 'text-oma-blue' : 'text-oma-text-secondary group-hover:text-oma-blue'
+                    className={`shrink-0 ${
+                      isActive ? 'text-[#005DD6]' : 'text-[#6E6E73] group-hover:text-[#005DD6]'
                     }`}
                   >
                     {cat.icon}
@@ -180,8 +194,8 @@ export const SidebarCatalog: React.FC<SidebarCatalogProps> = ({
                 <ChevronRight
                   className={`w-3.5 h-3.5 shrink-0 transition-transform ${
                     isActive
-                      ? 'text-oma-blue translate-x-0.5'
-                      : 'text-oma-text-tertiary opacity-0 group-hover:opacity-100'
+                      ? 'text-[#005DD6] translate-x-0.5'
+                      : 'text-[#9A9BA1] opacity-0 group-hover:opacity-100'
                   }`}
                 />
               </button>
@@ -189,27 +203,73 @@ export const SidebarCatalog: React.FC<SidebarCatalogProps> = ({
           })}
         </nav>
 
-        {/* Mobile Horizontal Pills */}
-        <div className="lg:hidden flex items-center space-x-2 overflow-x-auto p-2.5 bg-white">
-          {CATALOG_CATEGORIES.map((cat) => {
-            const isActive = activeView === 'catalog' && selectedCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => onSelectCategory(cat.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-medium flex items-center space-x-1.5 whitespace-nowrap transition-colors cursor-pointer ${
-                  isActive
-                    ? 'bg-oma-blue text-white font-semibold'
-                    : 'bg-oma-surface-alt text-oma-text hover:bg-oma-border'
-                }`}
-              >
-                <span>{cat.icon}</span>
-                <span>{cat.title}</span>
-              </button>
-            );
-          })}
-        </div>
+        {/* 2. Блок фильтрации (по макету 51011:80489) */}
+        {onMaxPriceChange && (
+          <div className="mt-6 pt-5 border-t border-[#E2E4E8] space-y-4">
+            <h4 className="text-[17px] font-medium leading-[24px] text-[#111111] px-1">
+              Фильтры
+            </h4>
+
+            {/* Фильтр цены */}
+            <div className="space-y-1 px-1">
+              <label className="text-[13px] text-[#6E6E73] block">
+                Цена до, руб.
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="10"
+                placeholder="до 300 руб."
+                value={maxPrice || ''}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  onMaxPriceChange(isNaN(val) ? undefined : val);
+                }}
+                className="w-full h-[44px] px-3 bg-[#F4F4F6] border border-[#E2E4E8] rounded-[10px] text-[15px] text-[#111111] outline-none focus:border-[#005DD6]"
+              />
+            </div>
+
+            {/* Бренды */}
+            {onToggleBrand && (
+              <div className="space-y-2 pt-2 px-1">
+                <span className="text-[13px] font-medium text-[#111111] block mb-1">
+                  Бренды
+                </span>
+                {POPULAR_BRANDS.map((brand) => (
+                  <div key={brand} className="flex items-center">
+                    <Checkbox
+                      size="m"
+                      checked={selectedBrands.includes(brand)}
+                      onUpdate={() => onToggleBrand(brand)}
+                    >
+                      <span className="text-[13px] text-[#111111] ml-1">{brand}</span>
+                    </Checkbox>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Чип «Можно установить» */}
+            {onToggleOnlyInstallation && (
+              <div className="pt-2 px-1">
+                <button
+                  type="button"
+                  onClick={onToggleOnlyInstallation}
+                  className={`w-full h-[36px] rounded-full text-[13px] font-medium transition-colors cursor-pointer border flex items-center justify-center gap-1.5 ${
+                    onlyWithInstallation
+                      ? 'bg-[#005DD6] text-white border-[#005DD6]'
+                      : 'bg-[#EDF4FF] text-[#005DD6] border-[#EDF4FF] hover:bg-[#DCEAFF]'
+                  }`}
+                >
+                  <span>✓ Можно установить</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </aside>
   );
 };
+
+export default SidebarCatalog;

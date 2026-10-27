@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { SidebarCatalog } from './components/SidebarCatalog';
 import { CatalogSection } from './components/CatalogSection';
+import { HomePage } from './components/HomePage';
+import { TaskPage } from './components/TaskPage';
 import { ProductPage } from './components/ProductPage';
 import { MasterPage } from './components/MasterPage';
 import { ProfilePanel } from './components/ProfilePanel';
@@ -11,7 +13,10 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
 import { CartProvider, useCart } from './context/CartContext';
 import { UserProvider } from './context/UserContext';
-import { Product } from './types';
+import { Product, Task } from './types';
+import tasksData from './data/tasks.json';
+
+const allTasks = tasksData as Task[];
 
 export type View =
   | 'home'
@@ -26,16 +31,22 @@ export type View =
   | 'task';
 
 export const AppContent: React.FC = () => {
-  const [activeView, setActiveView] = useState<View>('catalog');
+  const [activeView, setActiveView] = useState<View>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(allTasks[0]);
   const [masterProducts, setMasterProducts] = useState<Product[] | undefined>();
   const [profileOpen, setProfileOpen] = useState(false);
   const { setIsCartOpen } = useCart();
 
+  // Состояние фильтрации для каталога
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [onlyWithInstallation, setOnlyWithInstallation] = useState<boolean>(false);
+
   const handleGoHome = () => {
-    setActiveView('catalog');
+    setActiveView('home');
     setSelectedCategory('all');
     setSearchQuery('');
     setActiveProduct(null);
@@ -50,8 +61,21 @@ export const AppContent: React.FC = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (activeView !== 'catalog') setActiveView('catalog');
+    setActiveView('catalog');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSearchTask = (query: string) => {
+    const qLower = query.toLowerCase();
+    const foundTask = allTasks.find(
+      (t) => t.title.toLowerCase().includes(qLower) || t.description.toLowerCase().includes(qLower)
+    );
+    if (foundTask) {
+      setActiveTask(foundTask);
+      setActiveView('task');
+    } else {
+      handleSearch(query);
+    }
   };
 
   const openMaster = (products?: Product[]) => {
@@ -66,12 +90,31 @@ export const AppContent: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const openTask = (task: Task) => {
+    setActiveTask(task);
+    setActiveView('task');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const openCart = () => {
     setIsCartOpen(true);
   };
 
   const openLoyalty = () => {
     setProfileOpen(true);
+  };
+
+  const toggleBrand = (brand: string) => {
+    setSelectedBrands((prev) =>
+      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+    );
+  };
+
+  const resetAllFilters = () => {
+    setMaxPrice(undefined);
+    setSelectedBrands([]);
+    setOnlyWithInstallation(false);
+    setSearchQuery('');
   };
 
   const scrollToCatalog = () => {
@@ -117,6 +160,36 @@ export const AppContent: React.FC = () => {
             onStartMasterFlow={(product) => openMaster([product])}
           />
         </main>
+      ) : activeView === 'task' && activeTask ? (
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+          <TaskPage
+            task={activeTask}
+            onBack={handleGoHome}
+            onSelectProduct={openProduct}
+          />
+        </main>
+      ) : activeView === 'home' ? (
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8 flex flex-col lg:flex-row gap-6 items-start">
+          <SidebarCatalog
+            selectedCategory={selectedCategory}
+            activeView="home"
+            onSelectCategory={(catId) => {
+              setSelectedCategory(catId);
+              setActiveView('catalog');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onOpenMaster={() => openMaster()}
+          />
+
+          <div className="flex-1 min-w-0 w-full">
+            <HomePage
+              onSelectProduct={openProduct}
+              onSelectTask={openTask}
+              onGoToCatalog={handleGoCatalog}
+              onSearchTask={handleSearchTask}
+            />
+          </div>
+        </main>
       ) : (
         <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8 flex flex-col lg:flex-row gap-6 items-start">
           <SidebarCatalog
@@ -127,6 +200,12 @@ export const AppContent: React.FC = () => {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onOpenMaster={() => openMaster()}
+            maxPrice={maxPrice}
+            onMaxPriceChange={setMaxPrice}
+            selectedBrands={selectedBrands}
+            onToggleBrand={toggleBrand}
+            onlyWithInstallation={onlyWithInstallation}
+            onToggleOnlyInstallation={() => setOnlyWithInstallation(!onlyWithInstallation)}
           />
 
           <div className="flex-1 min-w-0 w-full">
@@ -135,6 +214,13 @@ export const AppContent: React.FC = () => {
               onSelectCategory={setSelectedCategory}
               searchQuery={searchQuery}
               onSelectProduct={openProduct}
+              maxPrice={maxPrice}
+              onClearMaxPrice={() => setMaxPrice(undefined)}
+              selectedBrands={selectedBrands}
+              onRemoveBrand={(b) => toggleBrand(b)}
+              onlyWithInstallation={onlyWithInstallation}
+              onToggleOnlyInstallation={() => setOnlyWithInstallation(!onlyWithInstallation)}
+              onResetAllFilters={resetAllFilters}
             />
           </div>
         </main>

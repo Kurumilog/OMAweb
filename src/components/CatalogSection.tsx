@@ -1,15 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  ShoppingCart,
-  Wrench,
-  ShieldCheck,
-  ArrowLeft,
-} from 'lucide-react';
+import { Breadcrumbs, Select, Pagination, Button } from '@gravity-ui/uikit';
+import { Xmark } from '@gravity-ui/icons';
 import { Product } from '../types';
 import productsData from '../data/products.json';
-import { useCart } from '../context/CartContext';
-import { formatBYN } from '../config/loyalty';
 import { CATALOG_CATEGORIES } from './SidebarCatalog';
+import { ProductCard } from './ProductCard';
 
 const products = productsData as Product[];
 
@@ -18,9 +13,15 @@ interface CatalogSectionProps {
   onSelectCategory: (categoryId: string) => void;
   searchQuery: string;
   onSelectProduct: (product: Product) => void;
+  maxPrice?: number;
+  onClearMaxPrice?: () => void;
+  selectedBrands?: string[];
+  onRemoveBrand?: (brand: string) => void;
+  onlyWithInstallation?: boolean;
+  onToggleOnlyInstallation?: () => void;
+  onResetAllFilters?: () => void;
 }
 
-// Helper to map extra sidebar categories to product dataset
 function matchesCategoryFilter(product: Product, categoryId: string): boolean {
   if (categoryId === 'all') return true;
   if (product.category === categoryId) return true;
@@ -48,20 +49,26 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
   onSelectCategory,
   searchQuery,
   onSelectProduct,
+  maxPrice,
+  onClearMaxPrice,
+  selectedBrands = [],
+  onRemoveBrand,
+  onlyWithInstallation = false,
+  onToggleOnlyInstallation,
+  onResetAllFilters,
 }) => {
-  const { addToCart } = useCart();
-  const [visibleCount, setVisibleCount] = useState(16);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortOption, setSortOption] = useState<string>('popular');
+  const pageSize = 8; // Сетка 4x2 по макету
 
-  // Reset pagination when category or search changes
+  // Сброс пагинации при смене фильтров
   useEffect(() => {
-    setVisibleCount(16);
-  }, [selectedCategory, searchQuery]);
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery, maxPrice, selectedBrands, onlyWithInstallation, sortOption]);
 
   const currentCategoryMeta = useMemo(() => {
     return CATALOG_CATEGORIES.find((c) => c.id === selectedCategory) || CATALOG_CATEGORIES[0];
   }, [selectedCategory]);
-
-  const isCategoryPage = selectedCategory !== 'all';
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -79,178 +86,186 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
           return false;
         }
       }
+      if (maxPrice !== undefined && p.price > maxPrice) {
+        return false;
+      }
+      if (selectedBrands.length > 0) {
+        if (!p.brand || !selectedBrands.includes(p.brand)) {
+          return false;
+        }
+      }
+      if (onlyWithInstallation) {
+        if (!p.serviceId && !p.installable) {
+          return false;
+        }
+      }
       return true;
+    }).sort((a, b) => {
+      if (sortOption === 'price-asc') return a.price - b.price;
+      if (sortOption === 'price-desc') return b.price - a.price;
+      if (sortOption === 'discount') {
+        const discA = a.oldPrice ? (a.oldPrice - a.price) : 0;
+        const discB = b.oldPrice ? (b.oldPrice - b.price) : 0;
+        return discB - discA;
+      }
+      return 0; // 'popular' по умолчанию
     });
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, maxPrice, selectedBrands, onlyWithInstallation, sortOption]);
+
+  const totalItems = filteredProducts.length;
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredProducts.slice(start, start + pageSize);
+  }, [filteredProducts, currentPage]);
+
+  const hasActiveFilters = Boolean(
+    maxPrice !== undefined ||
+    selectedBrands.length > 0 ||
+    onlyWithInstallation ||
+    searchQuery
+  );
 
   return (
-    <section id="catalog-section">
-      {/* Dedicated Category Page Header & Installation Price Block */}
-      {isCategoryPage ? (
-        <div className="mb-6 space-y-4">
-          <div className="bg-white rounded-2xl p-6 border border-oma-border shadow-card">
-            <button
-              onClick={() => onSelectCategory('all')}
-              className="inline-flex items-center space-x-1.5 text-xs font-medium text-oma-text-secondary hover:text-oma-blue mb-3 cursor-pointer transition-colors"
+    <section id="catalog-section" className="space-y-6 w-full">
+      {/* 1. Хлебные крошки — Figma node 51011:80590 */}
+      <Breadcrumbs>
+        <Breadcrumbs.Item onClick={() => onSelectCategory('all')}>Главная</Breadcrumbs.Item>
+        <Breadcrumbs.Item onClick={() => onSelectCategory('all')}>Каталог товаров</Breadcrumbs.Item>
+        {selectedCategory !== 'all' && (
+          <Breadcrumbs.Item>{currentCategoryMeta.title}</Breadcrumbs.Item>
+        )}
+      </Breadcrumbs>
+
+      {/* 2. Заголовок раздела — Figma node 51011:80614 */}
+      <div className="space-y-1">
+        <h1 className="text-[28px] md:text-[32px] font-medium leading-[36px] text-[#111111]">
+          {selectedCategory === 'all'
+            ? searchQuery
+              ? `Результаты поиска: «${searchQuery}»`
+              : 'Каталог товаров'
+            : currentCategoryMeta.title}
+        </h1>
+        <p className="text-[15px] leading-[20px] text-[#6E6E73]">
+          {selectedCategory === 'all'
+            ? 'Широкий ассортимент товаров для ремонта и обустройства дома с гарантией ОМА.'
+            : currentCategoryMeta.description}
+        </p>
+      </div>
+
+      {/* 3. Результаты и сортировка — Figma node 51011:80617 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 border-b border-[#E2E4E8]">
+        <span className="text-[15px] text-[#6E6E73]">
+          Найдено {totalItems} {totalItems === 1 ? 'товар' : totalItems < 5 ? 'товара' : 'товаров'}
+        </span>
+
+        <div className="flex items-center gap-3">
+          <span className="text-[13px] text-[#6E6E73]">Сортировка:</span>
+          <Select
+            size="m"
+            value={[sortOption]}
+            onUpdate={(vals) => setSortOption(vals[0] || 'popular')}
+            options={[
+              { value: 'popular', content: 'По популярности' },
+              { value: 'price-asc', content: 'Сначала дешевле' },
+              { value: 'price-desc', content: 'Сначала дороже' },
+              { value: 'discount', content: 'По размеру скидки' },
+            ]}
+            className="w-[220px]"
+          />
+        </div>
+      </div>
+
+      {/* 4. Активные фильтры — Figma node 51011:80649 */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          {onlyWithInstallation && (
+            <span
+              onClick={onToggleOnlyInstallation}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EDF4FF] text-[#005DD6] text-[13px] font-medium cursor-pointer hover:bg-[#DCEAFF]"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>На главную</span>
-            </button>
+              <span>Можно установить</span>
+              <Xmark className="w-3.5 h-3.5" />
+            </span>
+          )}
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-oma-text tracking-tight">
-                  {currentCategoryMeta.title}
-                </h1>
-                <p className="text-xs sm:text-sm text-oma-text-secondary mt-1">
-                  {currentCategoryMeta.description}
-                </p>
-              </div>
-              <span className="text-xs font-medium text-oma-text-secondary bg-oma-surface-alt px-3 py-1.5 rounded-xl self-start sm:self-auto">
-                {filteredProducts.length} товаров
-              </span>
-            </div>
+          {maxPrice !== undefined && onClearMaxPrice && (
+            <span
+              onClick={onClearMaxPrice}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ECEDF0] text-[#111111] text-[13px] font-medium cursor-pointer hover:bg-[#E2E4E8]"
+            >
+              <span>до {maxPrice} руб.</span>
+              <Xmark className="w-3.5 h-3.5" />
+            </span>
+          )}
 
-            {/* Category Installation Price Info (Only visible on Category Page!) */}
-            {currentCategoryMeta.installPriceInfo && (
-              <div className="mt-5 p-4 rounded-xl bg-oma-blue-tint border border-oma-blue/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-start space-x-3">
-                  <div className="w-9 h-9 rounded-xl bg-oma-blue text-white flex items-center justify-center shrink-0 mt-0.5">
-                    <Wrench className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-sm font-bold text-oma-text flex items-center space-x-2">
-                      <span>{currentCategoryMeta.installServiceTitle}</span>
-                    </div>
-                    <p className="text-xs text-oma-text-secondary mt-0.5">
-                      {currentCategoryMeta.installDetails}
-                    </p>
-                  </div>
-                </div>
-                <div className="sm:text-right shrink-0 pl-12 sm:pl-0">
-                  <div className="text-xs text-oma-text-secondary">Стоимость установки:</div>
-                  <div className="text-base font-extrabold text-oma-blue">
-                    {currentCategoryMeta.installPriceInfo}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        /* Main Page Section Header */
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl sm:text-2xl font-bold text-oma-text tracking-tight">
-            {searchQuery.trim() ? `Результаты поиска «${searchQuery}»` : 'Популярные товары'}
-          </h2>
-          <span className="text-xs text-oma-text-secondary">
-            {filteredProducts.length} поз.
-          </span>
+          {selectedBrands.map((b) => (
+            <span
+              key={b}
+              onClick={() => onRemoveBrand && onRemoveBrand(b)}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ECEDF0] text-[#111111] text-[13px] font-medium cursor-pointer hover:bg-[#E2E4E8]"
+            >
+              <span>{b}</span>
+              <Xmark className="w-3.5 h-3.5" />
+            </span>
+          ))}
+
+          {onResetAllFilters && (
+            <Button
+              view="flat"
+              size="s"
+              onClick={onResetAllFilters}
+              className="!text-[13px] !text-[#005DD6]"
+            >
+              Сбросить все
+            </Button>
+          )}
         </div>
       )}
 
-      {/* Product Grid */}
-      {filteredProducts.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 text-center border border-oma-border">
-          <p className="text-oma-text-secondary text-sm mb-3">
-            По вашему запросу ничего не найдено.
+      {/* 5. Сетка товаров 4x2 — Figma node 51011:80742 */}
+      {paginatedProducts.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {paginatedProducts.map((p) => (
+            <ProductCard
+              key={p.id}
+              product={p}
+              onSelectProduct={onSelectProduct}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="py-16 text-center bg-white rounded-[24px] border border-[#E2E4E8] p-8 space-y-3">
+          <p className="text-[17px] font-medium text-[#111111]">
+            По заданным фильтрам товары не найдены
           </p>
-          <button
-            onClick={() => onSelectCategory('all')}
-            className="px-4 py-2 bg-oma-surface-alt rounded-xl text-xs font-semibold text-oma-text hover:bg-oma-border transition-colors cursor-pointer"
-          >
-            Вернуться ко всем товарам
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5">
-          {filteredProducts.slice(0, visibleCount).map((product) => {
-            const discountPct = product.oldPrice
-              ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
-              : null;
-
-            return (
-              <div
-                key={product.id}
-                onClick={() => onSelectProduct(product)}
-                className="group bg-white rounded-2xl p-4 border border-oma-border hover:border-oma-blue shadow-card hover:shadow-card-hover transition-all flex flex-col justify-between cursor-pointer"
-              >
-                <div>
-                  {/* Clean Product Image */}
-                  <div className="relative aspect-square w-full rounded-xl bg-oma-bg overflow-hidden mb-3 p-3 flex items-center justify-center">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      loading="lazy"
-                      className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-200"
-                    />
-
-                    {discountPct && (
-                      <span className="absolute top-2.5 left-2.5 bg-oma-text text-white font-semibold text-[11px] px-2 py-0.5 rounded-lg">
-                        −{discountPct}%
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Brand & SKU */}
-                  <div className="flex items-center justify-between text-[11px] text-oma-text-tertiary mb-1">
-                    <span className="font-medium uppercase text-oma-text-secondary">
-                      {product.brand}
-                    </span>
-                    <span>Арт. {product.sku}</span>
-                  </div>
-
-                  {/* Product Title */}
-                  <h3
-                    className="text-xs sm:text-[13px] font-medium text-oma-text line-clamp-2 min-h-[2.4rem] mb-3 leading-snug group-hover:text-oma-blue transition-colors"
-                    title={product.name}
-                  >
-                    {product.name}
-                  </h3>
-                </div>
-
-                {/* Price & Single Standard Button */}
-                <div className="pt-2 border-t border-oma-border/60">
-                  <div className="flex items-baseline space-x-2 mb-3">
-                    <span className="text-base sm:text-lg font-bold text-oma-text">
-                      {formatBYN(product.price)}
-                    </span>
-                    {product.oldPrice && (
-                      <span className="text-xs text-oma-price-old line-through">
-                        {formatBYN(product.oldPrice)}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addToCart(product, 1, false);
-                    }}
-                    className="w-full py-2.5 px-3 bg-oma-surface-alt hover:bg-oma-blue hover:text-white text-oma-text font-semibold text-xs rounded-xl transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
-                  >
-                    <ShoppingCart className="w-3.5 h-3.5" />
-                    <span>В корзину</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          <p className="text-[13px] text-[#6E6E73]">
+            Попробуйте изменить параметры фильтрации или сбросить фильтры.
+          </p>
+          {onResetAllFilters && (
+            <Button view="normal" size="m" onClick={onResetAllFilters} className="mt-2">
+              Сбросить фильтры
+            </Button>
+          )}
         </div>
       )}
 
-      {/* Load More */}
-      {visibleCount < filteredProducts.length && (
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => setVisibleCount((prev) => prev + 16)}
-            className="px-6 py-3 bg-white hover:bg-oma-surface-alt text-oma-text font-semibold text-xs sm:text-sm rounded-xl border border-oma-border shadow-card transition-colors cursor-pointer"
-          >
-            Показать ещё ({filteredProducts.length - visibleCount})
-          </button>
+      {/* 6. Пагинация — Figma node 51011:80998 */}
+      {totalItems > pageSize && (
+        <div className="pt-6 flex justify-center">
+          <Pagination
+            page={currentPage}
+            pageSize={pageSize}
+            total={totalItems}
+            onUpdate={(newPage) => {
+              setCurrentPage(newPage);
+              window.scrollTo({ top: 300, behavior: 'smooth' });
+            }}
+            size="l"
+          />
         </div>
       )}
     </section>
   );
 };
+
+export default CatalogSection;
