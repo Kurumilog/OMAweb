@@ -1,0 +1,169 @@
+[
+  {
+    "id": "zamenit-smesitel",
+    "title": "Заменить смеситель",
+    "description": "Подбор смесителя для кухни или ванной, подводки, уплотнения и вызов мастера с фиксированной стоимостью установки.",
+    "icon": "wrench",
+    "modes": [
+      "diy",
+      "master"
+    ],
+    "calculator": {
+      "type": "none"
+    },
+    "bundle": [
+      {
+        "category": "santekhnika",
+        "filter": "смеситель",
+        "qty": 1
+      },
+      {
+        "category": "santekhnika",
+        "filter": "подводка",
+        "qty": 2
+      },
+      {
+        "category": "stroymaterialy",
+        "filter": "лента",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "id": "pokrasit-komnatu",
+    "title": "Покрасить комнату",
+    "description": "Расчет расхода краски, грунтовки, валиков и ленты по площади стен с возможностью заказа мастера или выполнения своими руками.",
+    "icon": "paint-roller",
+    "modes": [
+      "diy",
+      "master"
+    ],
+    "calculator": {
+      "type": "area",
+      "defaults": {
+        "length": 4,
+        "width": 3,
+        "height": 2.7
+      },
+      "rates": {
+        "paintLitersPerSqM": 0.22,
+        "primerLitersPerSqM": 0.12
+      }
+    },
+    "bundle": [
+      {
+        "category": "otdelka",
+        "filter": "краска",
+        "qty": 1
+      },
+      {
+        "category": "otdelka",
+        "filter": "грунтовка",
+        "qty": 1
+      },
+      {
+        "category": "instrument",
+        "filter": "валик",
+        "qty": 1
+      },
+      {
+        "category": "instrument",
+        "filter": "лента",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "id": "povesit-svetilnik",
+    "title": "Повесить светильник / розетки",
+    "description": "Светильники, люстры, розетки, рамки и выключатели с безопасным подключением электриком по фиксированной цене.",
+    "icon": "lightbulb",
+    "modes": [
+      "diy",
+      "master"
+    ],
+    "calculator": {
+      "type": "none"
+    },
+    "bundle": [
+      {
+        "category": "elektrika",
+        "filter": "светильник",
+        "qty": 1
+      },
+      {
+        "category": "elektrika",
+        "filter": "лампа",
+        "qty": 3
+      },
+      {
+        "category": "krepezh",
+        "filter": "дюбель",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "id": "ulozhit-laminat",
+    "title": "Уложить ламинат",
+    "description": "Выбор напольного покрытия 32-33 класса, подложки, плинтусов и расчет укладки мастером.",
+    "icon": "layers",
+    "modes": [
+      "diy",
+      "master"
+    ],
+    "calculator": {
+      "type": "area",
+      "defaults": {
+        "areaSqM": 18
+      },
+      "rates": {
+        "packSqM": 2.13,
+        "reservePercent": 7
+      }
+    },
+    "bundle": [
+      {
+        "category": "otdelka",
+        "filter": "ламинат",
+        "qty": 9
+      },
+      {
+        "category": "otdelka",
+        "filter": "подложка",
+        "qty": 1
+      },
+      {
+        "category": "otdelka",
+        "filter": "плинтус",
+        "qty": 8
+      }
+    ]
+  },
+  {
+    "id": "sobrat-mebel",
+    "title": "Собрать мебель / кухню",
+    "description": "Сборка корпусной мебели, подключение кухонной мойки и вытяжки.",
+    "icon": "hammer",
+    "modes": [
+      "master"
+    ],
+    "calculator": {
+      "type": "none"
+    },
+    "bundle": []
+  },
+  {
+    "id": "obnovit-vannuyu",
+    "title": "Обновить ванную",
+    "description": "Комплексная замена сантехники: ванна или душевая, унитаз, раковина, смесители и плитка.",
+    "icon": "bath",
+    "modes": [
+      "master"
+    ],
+    "calculator": {
+      "type": "none"
+    },
+    "bundle": []
+  }
+]

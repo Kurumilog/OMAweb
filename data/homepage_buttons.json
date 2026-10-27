@@ -1,0 +1,194 @@
+[
+  {
+    "section": "header_top",
+    "label": "Адреса магазинов",
+    "url": "/about/departments/",
+    "icon": "map-pin",
+    "action_type": "link",
+    "description": "Карта гипермаркетов и график работы ОМА в городах РБ"
+  },
+  {
+    "section": "header_top",
+    "label": "Покупателям",
+    "url": "/buyers/services/",
+    "icon": "chevron-down",
+    "action_type": "dropdown",
+    "description": "Меню услуг, доставки, способов оплаты, гарантии и возврата"
+  },
+  {
+    "section": "header_top",
+    "label": "Мастера",
+    "url": "/buyers/services/masters/",
+    "icon": "users",
+    "action_type": "link",
+    "description": "Каталог услуг сертифицированных мастеров ОМА"
+  },
+  {
+    "section": "header_top",
+    "label": "Программа лояльности",
+    "url": "/buyers/discount/balans/#card-info",
+    "icon": "credit-card",
+    "action_type": "link",
+    "description": "Накопительные карты «Баланс» и «Выбираем сами»"
+  },
+  {
+    "section": "header_top",
+    "label": "Партнерам / B2B",
+    "url": "/b2b/",
+    "icon": "briefcase",
+    "action_type": "link",
+    "description": "Портал для оптовых закупок, юрлиц и тендеров"
+  },
+  {
+    "section": "header_top",
+    "label": "Минск (Выбор города)",
+    "url": "#city",
+    "icon": "map-pin",
+    "action_type": "modal",
+    "description": "Переключатель домашнего региона и наличия на складах"
+  },
+  {
+    "section": "header_main",
+    "label": "Логотип ОМА",
+    "url": "/",
+    "icon": "home",
+    "action_type": "nav",
+    "description": "Переход на главную страницу сервиса «ОМА Дом»"
+  },
+  {
+    "section": "header_main",
+    "label": "Весь каталог",
+    "url": "/catalog/",
+    "icon": "grid",
+    "action_type": "menu_toggle",
+    "description": "Открытие полноэкранного мега-меню категорий товаров"
+  },
+  {
+    "section": "header_main",
+    "label": "Поиск товаров",
+    "url": "/search/",
+    "icon": "search",
+    "action_type": "form_submit",
+    "description": "Умная строка поиска с подсказками по товарам и задачам"
+  },
+  {
+    "section": "header_main",
+    "label": "Вход или Регистрация",
+    "url": "/?auth_form=y",
+    "icon": "user",
+    "action_type": "modal",
+    "description": "Авторизация по номеру телефона с начислением приветственных бонусов"
+  },
+  {
+    "section": "header_main",
+    "label": "Избранное",
+    "url": "/wishlist/",
+    "icon": "heart",
+    "action_type": "link",
+    "description": "Списки отложенных товаров и сохраненных проектов"
+  },
+  {
+    "section": "header_main",
+    "label": "Корзина",
+    "url": "/order/",
+    "icon": "shopping-cart",
+    "action_type": "cart_drawer",
+    "description": "Единая корзина товаров, услуг установки, доставки и списания бонусов"
+  },
+  {
+    "section": "header_nav",
+    "label": "🔥 ВСЕ АКЦИИ",
+    "url": "/sales/",
+    "icon": "flame",
+    "action_type": "link",
+    "description": "Специальные ценовые предложения и скидки недели"
+  },
+  {
+    "section": "header_nav",
+    "label": "💣 Супер цены",
+    "url": "/sales/akcionnye-predlozheniya/",
+    "icon": "tag",
+    "action_type": "link",
+    "description": "Хиты продаж с максимальным дисконтом"
+  },
+  {
+    "section": "header_nav",
+    "label": "Ликвидация!",
+    "url": "/sales/likvidatsiya/",
+    "icon": "percent",
+    "action_type": "link",
+    "description": "Распродажа складских остатков по сниженным ценам"
+  },
+  {
+    "section": "header_nav",
+    "label": "Топ продаж",
+    "url": "/sales/top-prodazh/",
+    "icon": "trending-up",
+    "action_type": "link",
+    "description": "Самые популярные позиции каталога ОМА"
+  },
+  {
+    "section": "header_nav",
+    "label": "Оплата частями",
+    "url": "/buyers/payment/#credit",
+    "icon": "clock",
+    "action_type": "link",
+    "description": "Покупка в рассрочку картами Халва, Черепаха, Магнит и др."
+  },
+  {
+    "section": "header_nav",
+    "label": "Листовка",
+    "url": "/listovka/",
+    "icon": "file-text",
+    "action_type": "link",
+    "description": "Электронный рекламный буклет актуальных акций"
+  },
+  {
+    "section": "header_nav",
+    "label": "Новости",
+    "url": "/news/",
+    "icon": "bell",
+    "action_type": "link",
+    "description": "События сети, советы по ремонту и мастер-классы"
+  },
+  {
+    "section": "mobile_bottom_bar",
+    "label": "Главная",
+    "url": "/",
+    "icon": "home",
+    "action_type": "tab",
+    "description": "Главный экран с входом по задаче («Что хотите сделать?»)"
+  },
+  {
+    "section": "mobile_bottom_bar",
+    "label": "Каталог",
+    "url": "/catalog/",
+    "icon": "grid",
+    "action_type": "tab",
+    "description": "Каталог товаров с фильтрацией «Установка доступна»"
+  },
+  {
+    "section": "mobile_bottom_bar",
+    "label": "Мастера",
+    "url": "/masters/",
+    "icon": "tool",
+    "action_type": "tab",
+    "description": "Вызов мастера на установку или консультацию с замером"
+  },
+  {
+    "section": "mobile_bottom_bar",
+    "label": "Корзина",
+    "url": "/cart/",
+    "icon": "shopping-cart",
+    "action_type": "tab",
+    "description": "Корзина с товарами, услугами и бонусами"
+  },
+  {
+    "section": "mobile_bottom_bar",
+    "label": "Профиль",
+    "url": "/account/",
+    "icon": "user",
+    "action_type": "tab",
+    "description": "Личный кабинет: статусы заказов и бонусный баланс"
+  }
+]
