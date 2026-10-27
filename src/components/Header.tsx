@@ -3,7 +3,8 @@ import {
   MapPin,
   ChevronDown,
   Magnifier,
-  Star,
+  Heart,
+  ShoppingCart,
   Xmark,
   Wrench,
 } from '@gravity-ui/icons';
@@ -193,22 +194,12 @@ export const Header: React.FC<HeaderProps> = ({
             </Button>
           </form>
 
-          {/* Чип «OMA Мастер» (высота 28 px) — Figma node 51011:68565 */}
-          <button
-            type="button"
-            onClick={onOpenMaster}
-            className="h-[28px] px-3 rounded-full bg-[#EDF4FF] text-[#005DD6] hover:bg-[#005DD6] hover:text-white transition-colors text-[13px] font-medium flex items-center gap-1.5 cursor-pointer shrink-0"
-          >
-            <Wrench />
-            <span>OMA Мастер</span>
-          </button>
-
           {/* Профиль и бонусы — Figma node 51011:68589 */}
           <button
             type="button"
             onClick={onOpenLoyalty || onOpenProfile}
             title="Программа лояльности «Баланс»"
-            className="flex flex-col text-left shrink-0 cursor-pointer group"
+            className="flex flex-col text-left shrink-0 cursor-pointer group w-[96px]"
           >
             <span className="text-[15px] leading-[20px] text-[#111111] group-hover:text-[#005DD6] transition-colors">
               {user.name || 'Александр'}
@@ -218,28 +209,27 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
 
-          {/* Избранное — Figma node 51011:68592 */}
+          {/* Избранное (просто значок) — Figma node 51011:68592 */}
           <button
             type="button"
             onClick={() => alert('Раздел «Избранное»')}
-            className="flex flex-col items-center justify-center shrink-0 text-[#111111] hover:text-[#005DD6] transition-colors cursor-pointer group"
+            className="w-[30px] h-[30px] flex items-center justify-center text-[#005DD6] hover:scale-110 transition-transform cursor-pointer shrink-0"
+            title="Избранное"
           >
-            <Star className="text-[#111111] group-hover:text-[#005DD6] transition-colors" />
-            <span className="text-[13px] leading-[18px]">Избранное</span>
+            <Heart className="w-[26px] h-[26px]" />
           </button>
 
-          {/* Корзина — Figma node 51011:68598 */}
+          {/* Корзина (значок + количество) — Figma node 51011:68598 */}
           <button
             type="button"
             onClick={handleCartClick}
-            className="flex items-center text-[13px] leading-[18px] font-medium text-[#111111] hover:text-[#005DD6] transition-colors cursor-pointer shrink-0 bg-[#F4F4F6] hover:bg-[#ECEDF0] px-3.5 py-2 rounded-[12px]"
+            className="flex items-center gap-1.5 text-[#005DD6] hover:scale-105 transition-transform cursor-pointer shrink-0"
+            title={`Корзина · ${totalCartCount}`}
           >
-            <span>Корзина · {totalCartCount}</span>
-            {grandTotal > 0 && (
-              <span className="ml-1.5 text-[#005DD6] font-semibold">
-                ({grandTotal.toFixed(2)} руб.)
-              </span>
-            )}
+            <ShoppingCart className="w-[26px] h-[26px]" />
+            <span className="text-[13px] font-normal leading-[18px] text-[#111111]">
+              {totalCartCount}
+            </span>
           </button>
         </div>
       </div>
