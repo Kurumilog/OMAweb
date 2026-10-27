@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Magnifier, CircleCheck } from '@gravity-ui/icons';
+import { Magnifier } from '@gravity-ui/icons';
 import { Button } from '@gravity-ui/uikit';
 import { Product, Task } from '../types';
 import productsData from '../data/products.json';
@@ -201,46 +201,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </div>
 
-      {/* 4. Преимущества (3 панели) — Figma node 51011:68954 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-        <div className="bg-white p-6 rounded-[24px] border border-[#E2E4E8] space-y-3 shadow-xs">
-          <div className="w-8 h-8 rounded-full bg-[#EDF4FF] text-[#005DD6] flex items-center justify-center">
-            <CircleCheck />
-          </div>
-          <h3 className="text-[17px] font-medium text-[#111111]">
-            Гарантия 12 месяцев
-          </h3>
-          <p className="text-[13px] leading-[18px] text-[#6E6E73]">
-            Официальный договор и страхование качества работ мастеров сервиса «ОМА Мастер».
-          </p>
-        </div>
-
-        <div className="bg-white p-6 rounded-[24px] border border-[#E2E4E8] space-y-3 shadow-xs">
-          <div className="w-8 h-8 rounded-full bg-[#EDF4FF] text-[#005DD6] flex items-center justify-center">
-            <CircleCheck />
-          </div>
-          <h3 className="text-[17px] font-medium text-[#111111]">
-            Проверенные специалисты
-          </h3>
-          <p className="text-[13px] leading-[18px] text-[#6E6E73]">
-            Все мастера проходят аттестацию, имеют средний подтверждённый рейтинг 4.8+ и опыт от 5 лет.
-          </p>
-        </div>
-
-        <div className="bg-white p-6 rounded-[24px] border border-[#E2E4E8] space-y-3 shadow-xs">
-          <div className="w-8 h-8 rounded-full bg-[#EDF4FF] text-[#005DD6] flex items-center justify-center">
-            <CircleCheck />
-          </div>
-          <h3 className="text-[17px] font-medium text-[#111111]">
-            Единая корзина
-          </h3>
-          <p className="text-[13px] leading-[18px] text-[#6E6E73]">
-            Товары, расходники и вызов мастера оформляются и оплачиваются в один понятный заказ.
-          </p>
-        </div>
-      </div>
-
-      {/* 5. Популярный каталог (сетка 4x2 с компактными карточками) — Figma node 51011:68979 */}
+      {/* 4. Популярный каталог (сетка 4x2 с компактными карточками) — Figma node 51011:68979 */}
       <div className="space-y-4" data-node-id="51011:68979" data-name="Товары">
         <div className="flex items-center justify-between">
           <h2 className="text-[24px] font-medium leading-[28px] text-[#111111]">
