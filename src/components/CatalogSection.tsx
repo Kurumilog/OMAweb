@@ -2,11 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Breadcrumbs, Select, Pagination, Button } from '@gravity-ui/uikit';
 import { Xmark } from '@gravity-ui/icons';
 import { Product } from '../types';
-import productsData from '../data/products.json';
+import { SHUFFLED_PRODUCTS } from '../utils/catalog';
 import { CATALOG_CATEGORIES } from './SidebarCatalog';
 import { ProductCard } from './ProductCard';
 
-const products = productsData as Product[];
+const products = SHUFFLED_PRODUCTS;
 
 interface CatalogSectionProps {
   selectedCategory: string;

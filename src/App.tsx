@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { SidebarCatalog } from './components/SidebarCatalog';
 import { CatalogSection } from './components/CatalogSection';
@@ -20,9 +20,11 @@ import { Footer } from './components/Footer';
 import { CartProvider, useCart } from './context/CartContext';
 import { UserProvider } from './context/UserContext';
 import { Product, Task, Service } from './types';
+import { SHUFFLED_PRODUCTS } from './utils/catalog';
 import tasksData from './data/tasks.json';
 import servicesData from './data/services.json';
 
+const allProducts = SHUFFLED_PRODUCTS;
 const allTasks = tasksData as Task[];
 const allServices = servicesData as Service[];
 
@@ -38,14 +40,90 @@ export type View =
   | 'loyalty'
   | 'task';
 
+interface HistoryRouteState {
+  view: View;
+  category?: string;
+  search?: string;
+  productId?: string | null;
+  taskId?: string | null;
+  serviceId?: string | null;
+}
+
+function parseRouteFromUrl(): HistoryRouteState {
+  const params = new URLSearchParams(window.location.search);
+  const viewParam = (params.get('view') as View) || 'home';
+  const category = params.get('category') || 'all';
+  const search = params.get('q') || '';
+  const productId = params.get('product') || null;
+  const taskId = params.get('task') || null;
+  const serviceId = params.get('service') || null;
+
+  return {
+    view: viewParam,
+    category,
+    search,
+    productId,
+    taskId,
+    serviceId,
+  };
+}
+
+function buildUrlFromState(state: HistoryRouteState): string {
+  const params = new URLSearchParams();
+  if (state.view && state.view !== 'home') {
+    params.set('view', state.view);
+  }
+  if (state.view === 'catalog' && state.category && state.category !== 'all') {
+    params.set('category', state.category);
+  }
+  if (state.view === 'catalog' && state.search) {
+    params.set('q', state.search);
+  }
+  if (state.view === 'product' && state.productId) {
+    params.set('product', state.productId);
+  }
+  if (state.view === 'task' && state.taskId) {
+    params.set('task', state.taskId);
+  }
+  if (state.view === 'service' && state.serviceId) {
+    params.set('service', state.serviceId);
+  }
+  const qs = params.toString();
+  return `${window.location.pathname}${qs ? `?${qs}` : ''}`;
+}
+
 export const AppContent: React.FC = () => {
-  const [activeView, setActiveView] = useState<View>('home');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
-  const [activeTask, setActiveTask] = useState<Task | null>(allTasks[0]);
+  const initialRoute = useRef<HistoryRouteState>(parseRouteFromUrl()).current;
+
+  const [activeView, setActiveView] = useState<View>(() => {
+    if (initialRoute.view === 'product' && initialRoute.productId) {
+      const found = allProducts.find((p) => p.id === initialRoute.productId);
+      if (found) return 'product';
+      return 'catalog';
+    }
+    return initialRoute.view;
+  });
+  const [searchQuery, setSearchQuery] = useState(initialRoute.search || '');
+  const [selectedCategory, setSelectedCategory] = useState(initialRoute.category || 'all');
+  const [activeProduct, setActiveProduct] = useState<Product | null>(() => {
+    if (initialRoute.productId) {
+      return allProducts.find((p) => p.id === initialRoute.productId) || null;
+    }
+    return null;
+  });
+  const [activeTask, setActiveTask] = useState<Task | null>(() => {
+    if (initialRoute.taskId) {
+      return allTasks.find((t) => t.id === initialRoute.taskId) || allTasks[0];
+    }
+    return allTasks[0];
+  });
   const [masterProducts, setMasterProducts] = useState<Product[] | undefined>();
-  const [selectedService, setSelectedService] = useState<Service>(allServices[0]);
+  const [selectedService, setSelectedService] = useState<Service>(() => {
+    if (initialRoute.serviceId) {
+      return allServices.find((s) => s.id === initialRoute.serviceId) || allServices[0];
+    }
+    return allServices[0];
+  });
   const [applicationProductSource, setApplicationProductSource] = useState<'oma' | 'own'>('oma');
   const [currentCabinetOrder, setCurrentCabinetOrder] = useState<CabinetOrder | undefined>();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -55,6 +133,79 @@ export const AppContent: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [onlyWithInstallation, setOnlyWithInstallation] = useState<boolean>(false);
+
+  // Поддержка кнопок Назад / Вперёд в Safari и других браузерах через History API
+  const isPopStateNavigation = useRef(false);
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    const initialState: HistoryRouteState = {
+      view: activeView,
+      category: selectedCategory,
+      search: searchQuery,
+      productId: activeProduct?.id || null,
+      taskId: activeTask?.id || null,
+      serviceId: selectedService?.id || null,
+    };
+    window.history.replaceState(initialState, '', buildUrlFromState(initialState));
+
+    const handlePopState = (event: PopStateEvent) => {
+      isPopStateNavigation.current = true;
+      const state: HistoryRouteState = event.state || parseRouteFromUrl();
+
+      setSelectedCategory(state.category || 'all');
+      setSearchQuery(state.search || '');
+
+      if (state.productId) {
+        const foundProduct = allProducts.find((p) => p.id === state.productId) || null;
+        setActiveProduct(foundProduct);
+      } else if (state.view !== 'application') {
+        setActiveProduct(null);
+      }
+
+      if (state.taskId) {
+        const foundTask = allTasks.find((t) => t.id === state.taskId) || allTasks[0];
+        setActiveTask(foundTask);
+      }
+
+      if (state.serviceId) {
+        const foundService = allServices.find((s) => s.id === state.serviceId) || allServices[0];
+        setSelectedService(foundService);
+      }
+
+      setActiveView(state.view || 'home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (isPopStateNavigation.current) {
+      isPopStateNavigation.current = false;
+      return;
+    }
+
+    const nextState: HistoryRouteState = {
+      view: activeView,
+      category: selectedCategory,
+      search: searchQuery,
+      productId: activeProduct?.id || null,
+      taskId: activeTask?.id || null,
+      serviceId: selectedService?.id || null,
+    };
+    const nextUrl = buildUrlFromState(nextState);
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+
+    if (nextUrl !== currentUrl) {
+      window.history.pushState(nextState, '', nextUrl);
+    }
+  }, [activeView, selectedCategory, searchQuery, activeProduct?.id, activeTask?.id, selectedService?.id]);
 
   const handleGoHome = () => {
     setActiveView('home');
@@ -264,6 +415,12 @@ export const AppContent: React.FC = () => {
           <ProductPage
             product={activeProduct}
             onBack={handleGoHome}
+            onGoToCatalog={(category) => {
+              if (category) setSelectedCategory(category);
+              setActiveProduct(null);
+              setActiveView('catalog');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             onSelectProduct={openProduct}
             onStartMasterFlow={(product) => {
               setActiveProduct(product);

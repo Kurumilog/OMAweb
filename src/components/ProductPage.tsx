@@ -19,19 +19,20 @@ import {
   Sparkles,
 } from '@gravity-ui/icons';
 import { Product, Service } from '../types';
-import productsData from '../data/products.json';
+import { SHUFFLED_PRODUCTS } from '../utils/catalog';
 import servicesData from '../data/services.json';
 import { useCart } from '../context/CartContext';
-import { calculateBonusPoints, formatBYN, BONUS_RATE_GOODS, BONUS_RATE_SERVICE } from '../config/loyalty';
+import { calculateBonusPoints, formatBYN, BONUS_RATE_SERVICE } from '../config/loyalty';
 import { ProductCard } from './ProductCard';
 import { DateTimeDrawer } from './DateTimeDrawer';
 
-const allProducts = productsData as Product[];
+const allProducts = SHUFFLED_PRODUCTS;
 const allServices = servicesData as Service[];
 
 interface ProductPageProps {
   product: Product;
   onBack: () => void;
+  onGoToCatalog?: (category?: string) => void;
   onSelectProduct: (product: Product) => void;
   onStartMasterFlow?: (product: Product) => void;
 }
@@ -39,10 +40,11 @@ interface ProductPageProps {
 export const ProductPage: React.FC<ProductPageProps> = ({
   product,
   onBack,
+  onGoToCatalog,
   onSelectProduct,
   onStartMasterFlow,
 }) => {
-  const { addToCart, addBundle } = useCart();
+  const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [mode, setMode] = useState<'product' | 'install'>(product.installable ? 'install' : 'product');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -85,25 +87,6 @@ export const ProductPage: React.FC<ProductPageProps> = ({
     ];
   }, [product]);
 
-  // Complementary goods for "С этим берут"
-  const complementaryBundle = useMemo(() => {
-    const list: Product[] = [];
-    if (product.relatedIds && product.relatedIds.length > 0) {
-      for (const id of product.relatedIds) {
-        const found = allProducts.find((p) => p.id === id);
-        if (found) list.push(found);
-      }
-    }
-    if (list.length < 2) {
-      const candidates = allProducts.filter((p) => p.id !== product.id && p.category === product.category);
-      for (const c of candidates) {
-        if (list.length >= 2) break;
-        if (!list.some((item) => item.id === c.id)) list.push(c);
-      }
-    }
-    return list.slice(0, 2);
-  }, [product]);
-
   // 4 Related products for bottom grid
   const relatedProducts = useMemo(() => {
     return allProducts
@@ -130,16 +113,6 @@ export const ProductPage: React.FC<ProductPageProps> = ({
     setTimeout(() => setAddedNotice(null), 2500);
   };
 
-  const handleAddBundle = () => {
-    const bundleItems = [
-      { product, qty: 1, withInstallation: isWithInstallation },
-      ...complementaryBundle.map((item) => ({ product: item, qty: 1, withInstallation: false })),
-    ];
-    addBundle(bundleItems);
-    setAddedNotice('Комплект в корзине');
-    setTimeout(() => setAddedNotice(null), 2500);
-  };
-
   const handleScheduleConfirm = (date: string, timeSlot: string, address: string) => {
     setScheduledDateTime({ date, timeSlot, address });
   };
@@ -159,13 +132,19 @@ export const ProductPage: React.FC<ProductPageProps> = ({
           <span>/</span>
           <button
             type="button"
-            onClick={onBack}
+            onClick={() => (onGoToCatalog ? onGoToCatalog('all') : onBack())}
             className="hover:text-oma-blue transition-colors cursor-pointer"
           >
             Каталог
           </button>
           <span>/</span>
-          <span>{product.subCategory || product.category}</span>
+          <button
+            type="button"
+            onClick={() => (onGoToCatalog ? onGoToCatalog(product.category) : onBack())}
+            className="hover:text-oma-blue transition-colors cursor-pointer"
+          >
+            {product.subCategory || product.category}
+          </button>
           <span>/</span>
           <span className="text-oma-text font-medium truncate max-w-xs">{product.name}</span>
         </div>
@@ -373,14 +352,14 @@ export const ProductPage: React.FC<ProductPageProps> = ({
           {/* Segmented Switcher: Только товар / С установкой */}
           {product.installable && service && (
             <div className="space-y-4 pt-1">
-              <div className="flex rounded-xl bg-[#ecedf0] p-1 border border-oma-border/60">
+              <div className="grid grid-cols-2 gap-1.5 rounded-[14px] bg-[#ECEDF0] p-1 border border-[#E2E4E8]">
                 <button
                   type="button"
                   onClick={() => setMode('product')}
-                  className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all cursor-pointer ${
+                  className={`h-[40px] px-3 text-[13px] font-medium rounded-[10px] flex items-center justify-center transition-all duration-200 cursor-pointer select-none ${
                     mode === 'product'
-                      ? 'bg-white text-oma-text font-bold shadow-sm'
-                      : 'text-oma-text-secondary hover:text-oma-text'
+                      ? 'bg-white text-[#111111] shadow-sm ring-1 ring-[#E2E4E8]'
+                      : 'text-[#6E6E73] hover:text-[#111111] hover:bg-white/60'
                   }`}
                 >
                   Только товар
@@ -388,10 +367,10 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                 <button
                   type="button"
                   onClick={() => setMode('install')}
-                  className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all cursor-pointer ${
+                  className={`h-[40px] px-3 text-[13px] font-medium rounded-[10px] flex items-center justify-center transition-all duration-200 cursor-pointer select-none ${
                     mode === 'install'
-                      ? 'bg-oma-blue text-white font-bold shadow-sm'
-                      : 'text-oma-text-secondary hover:text-oma-text'
+                      ? 'bg-[#005DD6] text-white shadow-sm ring-1 ring-[#005DD6]'
+                      : 'text-[#6E6E73] hover:text-[#005DD6] hover:bg-[#EDF4FF]/80'
                   }`}
                 >
                   С установкой
@@ -400,34 +379,34 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
               {/* Installation Details Sub-panel */}
               {isWithInstallation && (
-                <div className="bg-oma-tint/60 rounded-2xl p-4 border border-oma-blue/20 space-y-3">
+                <div className="bg-[#EDF4FF] rounded-2xl p-4 border border-[#005DD6]/20 space-y-3">
                   <div>
-                    <h3 className="text-sm font-bold text-oma-text">
+                    <h3 className="text-sm font-bold text-[#111111]">
                       {service.title} · {service.price} руб.
                     </h3>
-                    <p className="text-xs text-oma-text-secondary mt-0.5">
+                    <p className="text-xs text-[#6E6E73] mt-0.5">
                       В течение 1–3 дней · Гарантия {service.warrantyMonths} месяцев
                     </p>
                   </div>
 
                   {/* Disclosures: Что входит / Что не входит */}
                   <div className="space-y-1.5 pt-1">
-                    <Disclosure summary={<span className="text-xs font-semibold text-oma-text">Что входит</span>}>
-                      <ul className="text-xs text-oma-text-secondary space-y-1 pt-1.5 pl-2">
+                    <Disclosure summary={<span className="text-xs font-semibold text-[#111111]">Что входит</span>}>
+                      <ul className="text-xs text-[#6E6E73] space-y-1 pt-1.5 pl-2">
                         {service.includes.map((inc, i) => (
                           <li key={i} className="flex items-start gap-1.5">
-                            <Check className="w-3.5 h-3.5 text-oma-blue shrink-0 mt-0.5" />
+                            <Check className="w-3.5 h-3.5 text-[#005DD6] shrink-0 mt-0.5" />
                             <span>{inc}</span>
                           </li>
                         ))}
                       </ul>
                     </Disclosure>
 
-                    <Disclosure summary={<span className="text-xs font-semibold text-oma-text">Что не входит</span>}>
-                      <ul className="text-xs text-oma-text-secondary space-y-1 pt-1.5 pl-2">
+                    <Disclosure summary={<span className="text-xs font-semibold text-[#111111]">Что не входит</span>}>
+                      <ul className="text-xs text-[#6E6E73] space-y-1 pt-1.5 pl-2">
                         {service.excludes.map((exc, i) => (
                           <li key={i} className="flex items-start gap-1.5">
-                            <span className="text-oma-text-tertiary">✕</span>
+                            <span className="text-[#9A9BA1]">✕</span>
                             <span>{exc}</span>
                           </li>
                         ))}
@@ -435,16 +414,16 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                     </Disclosure>
                   </div>
 
-                  <div className="text-xs text-oma-blue font-medium">
+                  <div className="text-xs text-[#005DD6] font-medium">
                     +{serviceBonuses} Б за услугу
                   </div>
 
                   {/* Links: Выбрать дату и время / Нужен замер */}
-                  <div className="pt-2 border-t border-oma-blue/20 flex flex-col gap-1.5 text-xs">
+                  <div className="pt-2 border-t border-[#005DD6]/20 flex flex-col gap-1.5 text-xs">
                     <button
                       type="button"
                       onClick={() => setIsDrawerOpen(true)}
-                      className="text-left font-semibold text-oma-blue hover:underline cursor-pointer flex items-center justify-between"
+                      className="text-left font-semibold text-[#005DD6] hover:underline cursor-pointer flex items-center justify-between"
                     >
                       <span>
                         {scheduledDateTime
@@ -461,7 +440,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                       onClick={() => {
                         if (onStartMasterFlow) onStartMasterFlow(product);
                       }}
-                      className="text-left text-oma-text-secondary hover:text-oma-blue cursor-pointer"
+                      className="text-left text-[#6E6E73] hover:text-[#005DD6] cursor-pointer"
                     >
                       Нужен предварительный замер?
                     </button>
@@ -508,155 +487,84 @@ export const ProductPage: React.FC<ProductPageProps> = ({
         </div>
       </div>
 
-      {/* 4. Complementary Bundle ("С этим берут", 1360px) */}
-      {complementaryBundle.length > 0 && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-oma-border shadow-sm space-y-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-oma-text">С этим берут</h2>
+      {/* 4. Installation Steps & Advantages ("Как работает установка" — показывается ТОЛЬКО при выборе «С установкой») */}
+      {isWithInstallation && (
+        <>
+          <div className="space-y-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#111111]">Как работает установка</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-            {/* Complementary Item 1 */}
-            {complementaryBundle[0] && (
-              <div className="space-y-3 p-4 rounded-2xl bg-oma-bg border border-oma-border/60">
-                <h3 className="text-base font-semibold text-oma-text line-clamp-1">
-                  {complementaryBundle[0].name}
-                </h3>
-                <p className="text-sm text-oma-text font-bold">
-                  {formatBYN(complementaryBundle[0].price)} · 1 шт.
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white rounded-3xl p-5 border border-[#E2E4E8] shadow-sm space-y-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#005DD6] text-white font-bold text-sm">
+                  1
+                </span>
+                <h3 className="text-base font-bold text-[#111111]">Покупка товара и услуги</h3>
+                <p className="text-xs text-[#6E6E73] leading-relaxed">
+                  Выбираете товар в ОМА и добавляете установку в один клик.
                 </p>
-                <Button
-                  view="normal"
-                  size="m"
-                  className="!rounded-xl"
-                  onClick={() => addToCart(complementaryBundle[0], 1, false)}
-                >
-                  Добавить
-                </Button>
               </div>
-            )}
 
-            {/* Complementary Item 2 */}
-            {complementaryBundle[1] && (
-              <div className="space-y-3 p-4 rounded-2xl bg-oma-bg border border-oma-border/60">
-                <h3 className="text-base font-semibold text-oma-text line-clamp-1">
-                  {complementaryBundle[1].name}
-                </h3>
-                <p className="text-sm text-oma-text font-bold">
-                  {formatBYN(complementaryBundle[1].price)} · 1 шт.
+              <div className="bg-white rounded-3xl p-5 border border-[#E2E4E8] shadow-sm space-y-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#005DD6] text-white font-bold text-sm">
+                  2
+                </span>
+                <h3 className="text-base font-bold text-[#111111]">Согласование времени</h3>
+                <p className="text-xs text-[#6E6E73] leading-relaxed">
+                  Мастер связывается с вами и фиксирует удобное время визита.
                 </p>
-                <Button
-                  view="normal"
-                  size="m"
-                  className="!rounded-xl"
-                  onClick={() => addToCart(complementaryBundle[1], 1, false)}
-                >
-                  Добавить
-                </Button>
               </div>
-            )}
 
-            {/* Bundle Action */}
-            <div className="space-y-3 p-4 rounded-2xl bg-oma-tint border border-oma-blue/20">
-              <h3 className="text-base font-bold text-oma-text">
-                Вместе —{' '}
-                {formatBYN(
-                  product.price +
-                    (complementaryBundle[0]?.price || 0) +
-                    (complementaryBundle[1]?.price || 0) +
-                    servicePrice
-                )}
-              </h3>
-              <p className="text-xs text-oma-text-secondary">
-                {product.brand}, комплектующие и профессиональный монтаж
-              </p>
-              <Button
-                view="action"
-                size="l"
-                width="max"
-                className="!rounded-xl !font-semibold"
-                onClick={handleAddBundle}
-              >
-                Добавить комплект
-              </Button>
+              <div className="bg-white rounded-3xl p-5 border border-[#E2E4E8] shadow-sm space-y-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#005DD6] text-white font-bold text-sm">
+                  3
+                </span>
+                <h3 className="text-base font-bold text-[#111111]">Выезд мастера и работа</h3>
+                <p className="text-xs text-[#6E6E73] leading-relaxed">
+                  Специалист приезжает с инструментом и выполняет монтаж по стандартам.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-3xl p-5 border border-[#E2E4E8] shadow-sm space-y-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#005DD6] text-white font-bold text-sm">
+                  4
+                </span>
+                <h3 className="text-base font-bold text-[#111111]">Приёмка, гарантия 12 мес.</h3>
+                <p className="text-xs text-[#6E6E73] leading-relaxed">
+                  Вы проверяете работу, подписываете акт и получаете гарантию и бонусы.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-white rounded-3xl p-6 border border-[#E2E4E8] shadow-sm space-y-2">
+              <CircleCheck className="w-5 h-5 text-[#005DD6]" />
+              <h3 className="text-base font-bold text-[#111111]">Проверенные мастера</h3>
+              <p className="text-xs text-[#6E6E73] leading-relaxed">
+                Все специалисты с подтверждённым опытом, паспортом и рейтингом от 4.8.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-[#E2E4E8] shadow-sm space-y-2">
+              <CircleCheck className="w-5 h-5 text-[#005DD6]" />
+              <h3 className="text-base font-bold text-[#111111]">Фиксированная цена</h3>
+              <p className="text-xs text-[#6E6E73] leading-relaxed">
+                Стоимость работ известна до начала монтажа и не меняется без согласования.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-[#E2E4E8] shadow-sm space-y-2">
+              <CircleCheck className="w-5 h-5 text-[#005DD6]" />
+              <h3 className="text-base font-bold text-[#111111]">Гарантия 12 месяцев</h3>
+              <p className="text-xs text-[#6E6E73] leading-relaxed">
+                Официальный договор, кассовый чек и гарантия сети гипермаркетов ОМА.
+              </p>
+            </div>
+          </div>
+        </>
       )}
 
-      {/* 5. Installation Steps ("Как работает установка", 1360px) */}
-      <div className="space-y-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-oma-text">Как работает установка</h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-3xl p-5 border border-oma-border shadow-sm space-y-3">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-oma-blue text-white font-bold text-sm">
-              1
-            </span>
-            <h3 className="text-base font-bold text-oma-text">Покупка товара и услуги</h3>
-            <p className="text-xs text-oma-text-secondary leading-relaxed">
-              Выбираете товар в ОМА и добавляете установку в один клик.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-3xl p-5 border border-oma-border shadow-sm space-y-3">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-oma-blue text-white font-bold text-sm">
-              2
-            </span>
-            <h3 className="text-base font-bold text-oma-text">Согласование времени</h3>
-            <p className="text-xs text-oma-text-secondary leading-relaxed">
-              Мастер связывается с вами и фиксирует удобное время визита.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-3xl p-5 border border-oma-border shadow-sm space-y-3">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-oma-blue text-white font-bold text-sm">
-              3
-            </span>
-            <h3 className="text-base font-bold text-oma-text">Выезд мастера и работа</h3>
-            <p className="text-xs text-oma-text-secondary leading-relaxed">
-              Специалист приезжает с инструментом и выполняет монтаж по стандартам.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-3xl p-5 border border-oma-border shadow-sm space-y-3">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-oma-blue text-white font-bold text-sm">
-              4
-            </span>
-            <h3 className="text-base font-bold text-oma-text">Приёмка, гарантия 12 мес.</h3>
-            <p className="text-xs text-oma-text-secondary leading-relaxed">
-              Вы проверяете работу, подписываете акт и получаете гарантию и бонусы.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 6. Advantages ("Преимущества") */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white rounded-3xl p-6 border border-oma-border shadow-sm space-y-2">
-          <CircleCheck className="w-5 h-5 text-oma-blue" />
-          <h3 className="text-base font-bold text-oma-text">Проверенные мастера</h3>
-          <p className="text-xs text-oma-text-secondary leading-relaxed">
-            Все специалисты с подтверждённым опытом, паспортом и рейтингом от 4.8.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 border border-oma-border shadow-sm space-y-2">
-          <CircleCheck className="w-5 h-5 text-oma-blue" />
-          <h3 className="text-base font-bold text-oma-text">Фиксированная цена</h3>
-          <p className="text-xs text-oma-text-secondary leading-relaxed">
-            Стоимость работ известна до начала монтажа и не меняется без согласования.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 border border-oma-border shadow-sm space-y-2">
-          <CircleCheck className="w-5 h-5 text-oma-blue" />
-          <h3 className="text-base font-bold text-oma-text">Гарантия 12 месяцев</h3>
-          <p className="text-xs text-oma-text-secondary leading-relaxed">
-            Официальный договор, кассовый чек и гарантия сети гипермаркетов ОМА.
-          </p>
-        </div>
-      </div>
-
-      {/* 7. Related Products Grid ("Похожие товары") */}
+      {/* 5. Related Products Grid ("Похожие товары") */}
       {relatedProducts.length > 0 && (
         <div className="space-y-5">
           <h2 className="text-xl sm:text-2xl font-bold text-oma-text">Похожие товары</h2>

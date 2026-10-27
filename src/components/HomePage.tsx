@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Magnifier } from '@gravity-ui/icons';
 import { Button } from '@gravity-ui/uikit';
 import { Product, Task } from '../types';
-import productsData from '../data/products.json';
+import { SHUFFLED_PRODUCTS } from '../utils/catalog';
 import tasksData from '../data/tasks.json';
 import { ProductCard } from './ProductCard';
 
-const products = productsData as Product[];
+const products = SHUFFLED_PRODUCTS;
 const tasks = tasksData as Task[];
 
 interface HomePageProps {
