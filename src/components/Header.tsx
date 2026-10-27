@@ -140,8 +140,8 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* 2. Основная шапка (84 px) — Figma node 51011:68504 */}
-      <div className="h-[84px] bg-white">
-        <div className="max-w-[1440px] h-full mx-auto px-10 flex items-center justify-between gap-5">
+      <div className="h-[84px] bg-white border-b border-[#E2E4E8]">
+        <div className="max-w-[1440px] h-full mx-auto px-4 md:px-10 flex items-center gap-4 md:gap-6">
           {/* Логотип ОМА (110x53 px) */}
           <button
             type="button"
@@ -152,12 +152,12 @@ export const Header: React.FC<HeaderProps> = ({
             <img
               src="/logo_cropped.png"
               alt="ОМА"
-              className="h-[44px] w-auto object-contain"
+              className="h-[38px] md:h-[44px] w-auto object-contain"
             />
           </button>
 
-          {/* Поиск (высота 52 px) */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-[770px] flex items-center gap-2">
+          {/* Поиск (растягивается, занимает всё доступное пространство) */}
+          <form onSubmit={handleSearchSubmit} className="flex-1 min-w-0 flex items-center gap-2">
             <div className="relative flex-1 h-[52px]">
               <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-[#9A9BA1]">
                 <Magnifier />
@@ -188,49 +188,52 @@ export const Header: React.FC<HeaderProps> = ({
               type="submit"
               view="normal"
               size="l"
-              className="!h-[52px] !rounded-[12px] !px-6 !bg-[#ECEDF0] hover:!bg-[#E2E4E8] !text-[#111111] !text-[15px] !font-normal"
+              className="!h-[52px] !rounded-[12px] !px-5 md:!px-6 !bg-[#ECEDF0] hover:!bg-[#E2E4E8] !text-[#111111] !text-[15px] !font-normal shrink-0"
             >
               Найти
             </Button>
           </form>
 
-          {/* Профиль и бонусы — Figma node 51011:68589 */}
-          <button
-            type="button"
-            onClick={onOpenLoyalty || onOpenProfile}
-            title="Программа лояльности «Баланс»"
-            className="flex flex-col text-left shrink-0 cursor-pointer group w-[96px]"
-          >
-            <span className="text-[15px] leading-[20px] text-[#111111] group-hover:text-[#005DD6] transition-colors">
-              {user.name || 'Александр'}
-            </span>
-            <span className="text-[13px] leading-[18px] text-[#005DD6] font-medium">
-              {formatPoints(user.bonusBalance)}
-            </span>
-          </button>
+          {/* Правый блок: аккаунт, избранное, корзина — компактная группа с аккуратным расстоянием */}
+          <div className="flex items-center gap-4 md:gap-5 shrink-0">
+            {/* Профиль и бонусы — Figma node 51011:68589 */}
+            <button
+              type="button"
+              onClick={onOpenLoyalty || onOpenProfile}
+              title="Программа лояльности «Баланс»"
+              className="flex flex-col text-left shrink-0 cursor-pointer group min-w-[70px] md:min-w-[85px]"
+            >
+              <span className="text-[14px] md:text-[15px] leading-[18px] md:leading-[20px] text-[#111111] group-hover:text-[#005DD6] transition-colors font-normal truncate">
+                {user.name || 'Александр'}
+              </span>
+              <span className="text-[12px] md:text-[13px] leading-[16px] md:leading-[18px] text-[#005DD6] font-medium">
+                {formatPoints(user.bonusBalance)}
+              </span>
+            </button>
 
-          {/* Избранное (просто значок) — Figma node 51011:68592 */}
-          <button
-            type="button"
-            onClick={() => alert('Раздел «Избранное»')}
-            className="w-[30px] h-[30px] flex items-center justify-center text-[#005DD6] hover:scale-110 transition-transform cursor-pointer shrink-0"
-            title="Избранное"
-          >
-            <Heart className="w-[26px] h-[26px]" />
-          </button>
+            {/* Избранное (просто значок) — Figma node 51011:68592 */}
+            <button
+              type="button"
+              onClick={() => alert('Раздел «Избранное»')}
+              className="w-[32px] h-[32px] flex items-center justify-center text-[#005DD6] hover:scale-110 transition-transform cursor-pointer shrink-0"
+              title="Избранное"
+            >
+              <Heart className="w-[24px] h-[24px] md:w-[26px] md:h-[26px]" />
+            </button>
 
-          {/* Корзина (значок + количество) — Figma node 51011:68598 */}
-          <button
-            type="button"
-            onClick={handleCartClick}
-            className="flex items-center gap-1.5 text-[#005DD6] hover:scale-105 transition-transform cursor-pointer shrink-0"
-            title={`Корзина · ${totalCartCount}`}
-          >
-            <ShoppingCart className="w-[26px] h-[26px]" />
-            <span className="text-[13px] font-normal leading-[18px] text-[#111111]">
-              {totalCartCount}
-            </span>
-          </button>
+            {/* Корзина (значок + количество) — Figma node 51011:68598 */}
+            <button
+              type="button"
+              onClick={handleCartClick}
+              className="flex items-center gap-1.5 text-[#005DD6] hover:scale-105 transition-transform cursor-pointer shrink-0"
+              title={`Корзина · ${totalCartCount}`}
+            >
+              <ShoppingCart className="w-[24px] h-[24px] md:w-[26px] md:h-[26px]" />
+              <span className="text-[13px] md:text-[14px] font-normal leading-[18px] text-[#111111]">
+                {totalCartCount}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
