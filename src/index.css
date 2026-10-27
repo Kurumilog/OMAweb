@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --color-oma-blue: #005DD6;
+  --color-oma-blue-hover: #004EB8;
+  --color-oma-blue-pressed: #004099;
+  --color-oma-blue-tint: #EDF4FF;
+  --color-oma-surface: #FFFFFF;
+  --color-oma-surface-alt: #ECEDF0;
+  --color-oma-bg: #F4F4F6;
+  --color-oma-border: #E2E4E8;
+  --color-oma-text: #111111;
+  --color-oma-text-secondary: #6E6E73;
+  --color-oma-text-tertiary: #9A9BA1;
+  --color-oma-bonus: #005DD6;
+  --color-oma-success: #111111;
+  --color-oma-warning: #6E6E73;
+  --color-oma-error: #111111;
+  --color-oma-discount: #005DD6;
+  --color-oma-price-old: #9A9BA1;
+
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+:root {
+  --oma-blue: #005DD6;
+  --oma-blue-hover: #004EB8;
+  --oma-blue-pressed: #004099;
+  --oma-blue-tint: #EDF4FF;
+  --bg: #F4F4F6;
+  --surface: #FFFFFF;
+  --surface-alt: #ECEDF0;
+  --border: #E2E4E8;
+  --text: #111111;
+  --text-secondary: #6E6E73;
+  --text-tertiary: #9A9BA1;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #F4F4F6;
+  color: #111111;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D1D3D9;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B0B3BA;
+}

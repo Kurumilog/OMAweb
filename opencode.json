@@ -1,0 +1,10 @@
+{
+  "mcp": {
+    "servers": {
+      "supermemory-docs": {
+        "type": "remote",
+        "url": "https://supermemory.ai/docs/mcp"
+      }
+    }
+  }
+}
