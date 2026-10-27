@@ -84,7 +84,7 @@ export const DateTimeDrawer: React.FC<DateTimeDrawerProps> = ({
       placement="right"
       className="z-50"
     >
-      <div className="w-[600px] max-w-full h-full bg-white flex flex-col justify-between p-8 overflow-y-auto">
+      <div className="w-screen sm:w-[600px] max-w-full h-full bg-white flex flex-col justify-between p-5 sm:p-8 overflow-y-auto">
         <div className="space-y-6">
           {/* Header */}
           <div className="flex items-start justify-between gap-4">

@@ -166,8 +166,8 @@ export const SidebarCatalog: React.FC<SidebarCatalogProps> = ({
           Категории каталога
         </div>
 
-        {/* Вертикальный список 11 категорий */}
-        <nav className="flex flex-col space-y-1">
+        {/* На мобильных и планшетах — горизонтальный скролл чипов; на десктопе — вертикальный список 11 категорий */}
+        <nav className="flex lg:flex-col gap-1.5 lg:gap-0 lg:space-y-1 overflow-x-auto lg:overflow-x-visible pb-1 lg:pb-0 no-scrollbar">
           {CATALOG_CATEGORIES.map((cat) => {
             const isActive = activeView === 'catalog' && selectedCategory === cat.id;
             return (
@@ -175,13 +175,13 @@ export const SidebarCatalog: React.FC<SidebarCatalogProps> = ({
                 key={cat.id}
                 type="button"
                 onClick={() => onSelectCategory(cat.id)}
-                className={`w-full h-[40px] px-3 rounded-[12px] text-left flex items-center justify-between transition-colors cursor-pointer group ${
+                className={`shrink-0 lg:w-full h-[38px] lg:h-[40px] px-3 rounded-[12px] text-left flex items-center justify-between transition-colors cursor-pointer group ${
                   isActive
                     ? 'bg-[#EDF4FF] text-[#005DD6] font-medium'
-                    : 'bg-white hover:bg-[#F4F4F6] text-[#111111]'
+                    : 'bg-[#F4F4F6] lg:bg-white hover:bg-[#F4F4F6] text-[#111111]'
                 }`}
               >
-                <div className="flex items-center space-x-2.5 min-w-0">
+                <div className="flex items-center space-x-2 lg:space-x-2.5 min-w-0">
                   <span
                     className={`shrink-0 ${
                       isActive ? 'text-[#005DD6]' : 'text-[#6E6E73] group-hover:text-[#005DD6]'
@@ -189,10 +189,10 @@ export const SidebarCatalog: React.FC<SidebarCatalogProps> = ({
                   >
                     {cat.icon}
                   </span>
-                  <span className="text-[13px] truncate">{cat.title}</span>
+                  <span className="text-[13px] whitespace-nowrap lg:truncate">{cat.title}</span>
                 </div>
                 <ChevronRight
-                  className={`w-3.5 h-3.5 shrink-0 transition-transform ${
+                  className={`hidden lg:block w-3.5 h-3.5 shrink-0 transition-transform ${
                     isActive
                       ? 'text-[#005DD6] translate-x-0.5'
                       : 'text-[#9A9BA1] opacity-0 group-hover:opacity-100'

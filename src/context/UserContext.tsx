@@ -10,6 +10,9 @@ interface UserContextType {
   spendBonuses: (amount: number) => void;
   isRegistered: boolean;
   registerUser: (phone: string, name: string) => void;
+  favorites: string[];
+  toggleFavorite: (productId: string) => void;
+  isFavorite: (productId: string) => boolean;
 }
 
 const defaultUser: UserProfile = {
@@ -35,6 +38,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [isRegistered, setIsRegistered] = useState(true);
+
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('oma_favorites');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('oma_favorites', JSON.stringify(favorites));
+    } catch (e) {
+      console.error('Failed to save favorites', e);
+    }
+  }, [favorites]);
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites((prev) =>
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
+    );
+  };
+
+  const isFavorite = (productId: string) => favorites.includes(productId);
 
   useEffect(() => {
     try {
@@ -84,8 +112,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       spendBonuses,
       isRegistered,
       registerUser,
+      favorites,
+      toggleFavorite,
+      isFavorite,
     }),
-    [user, isRegistered]
+    [user, isRegistered, favorites]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

@@ -133,6 +133,7 @@ export const AppContent: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [onlyWithInstallation, setOnlyWithInstallation] = useState<boolean>(false);
+  const [onlyFavorites, setOnlyFavorites] = useState<boolean>(false);
 
   // Поддержка кнопок Назад / Вперёд в Safari и других браузерах через History API
   const isPopStateNavigation = useRef(false);
@@ -211,18 +212,29 @@ export const AppContent: React.FC = () => {
     setActiveView('home');
     setSelectedCategory('all');
     setSearchQuery('');
+    setOnlyFavorites(false);
     setActiveProduct(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleGoCatalog = () => {
     setActiveView('catalog');
+    setOnlyFavorites(false);
     setActiveProduct(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleShowFavoritesInCatalog = () => {
+    setSelectedCategory('all');
+    setOnlyFavorites(true);
+    setActiveProduct(null);
+    setActiveView('catalog');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setOnlyFavorites(false);
     setActiveView('catalog');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -278,6 +290,7 @@ export const AppContent: React.FC = () => {
     setMaxPrice(undefined);
     setSelectedBrands([]);
     setOnlyWithInstallation(false);
+    setOnlyFavorites(false);
     setSearchQuery('');
   };
 
@@ -305,10 +318,12 @@ export const AppContent: React.FC = () => {
         onOpenProfile={() => setProfileOpen(true)}
         onOpenLoyalty={openLoyalty}
         onOpenCart={openCart}
+        onSelectProduct={openProduct}
+        onShowFavoritesInCatalog={handleShowFavoritesInCatalog}
       />
 
       {activeView === 'master' ? (
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8">
           <MasterLandingPage
             onSelectService={(svc) => {
               setSelectedService(svc);
@@ -327,7 +342,7 @@ export const AppContent: React.FC = () => {
           />
         </main>
       ) : activeView === 'service' ? (
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8">
           <ServicePage
             service={selectedService || allServices[0]}
             onBack={() => {
@@ -345,7 +360,7 @@ export const AppContent: React.FC = () => {
           />
         </main>
       ) : activeView === 'application' ? (
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8">
           <MasterApplicationPage
             initialService={selectedService}
             initialProduct={activeProduct}
@@ -384,7 +399,7 @@ export const AppContent: React.FC = () => {
           />
         </main>
       ) : activeView === 'order-cabinet' ? (
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8">
           <OrderCabinetPage
             order={currentCabinetOrder}
             onBackToHome={handleGoHome}
@@ -393,14 +408,14 @@ export const AppContent: React.FC = () => {
           />
         </main>
       ) : activeView === 'loyalty' ? (
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8">
           <LoyaltyPage
             onGoToCatalog={handleGoCatalog}
             onOpenMaster={() => openMaster()}
           />
         </main>
       ) : activeView === 'cart' ? (
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8">
           <CartPage
             onBackToCatalog={handleGoCatalog}
             onProceedToOrder={() => {
@@ -411,12 +426,13 @@ export const AppContent: React.FC = () => {
           />
         </main>
       ) : activeView === 'product' && activeProduct ? (
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8">
           <ProductPage
             product={activeProduct}
             onBack={handleGoHome}
             onGoToCatalog={(category) => {
               if (category) setSelectedCategory(category);
+              setOnlyFavorites(false);
               setActiveProduct(null);
               setActiveView('catalog');
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -433,7 +449,7 @@ export const AppContent: React.FC = () => {
           />
         </main>
       ) : activeView === 'task' && activeTask ? (
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8">
           <TaskPage
             task={activeTask}
             onBack={handleGoHome}
@@ -441,12 +457,13 @@ export const AppContent: React.FC = () => {
           />
         </main>
       ) : activeView === 'home' ? (
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8 flex flex-col lg:flex-row gap-6 items-start">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8 flex flex-col lg:flex-row gap-6 items-start">
           <SidebarCatalog
             selectedCategory={selectedCategory}
             activeView="home"
             onSelectCategory={(catId) => {
               setSelectedCategory(catId);
+              setOnlyFavorites(false);
               setActiveView('catalog');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
@@ -463,12 +480,13 @@ export const AppContent: React.FC = () => {
           </div>
         </main>
       ) : (
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8 flex flex-col lg:flex-row gap-6 items-start">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8 flex flex-col lg:flex-row gap-6 items-start">
           <SidebarCatalog
             selectedCategory={selectedCategory}
             activeView="catalog"
             onSelectCategory={(catId) => {
               setSelectedCategory(catId);
+              setOnlyFavorites(false);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onOpenMaster={() => openMaster()}
@@ -483,7 +501,10 @@ export const AppContent: React.FC = () => {
           <div className="flex-1 min-w-0 w-full">
             <CatalogSection
               selectedCategory={selectedCategory}
-              onSelectCategory={setSelectedCategory}
+              onSelectCategory={(catId) => {
+                setSelectedCategory(catId);
+                setOnlyFavorites(false);
+              }}
               searchQuery={searchQuery}
               onSelectProduct={openProduct}
               maxPrice={maxPrice}
@@ -492,6 +513,8 @@ export const AppContent: React.FC = () => {
               onRemoveBrand={(b) => toggleBrand(b)}
               onlyWithInstallation={onlyWithInstallation}
               onToggleOnlyInstallation={() => setOnlyWithInstallation(!onlyWithInstallation)}
+              onlyFavorites={onlyFavorites}
+              onToggleOnlyFavorites={() => setOnlyFavorites(!onlyFavorites)}
               onResetAllFilters={resetAllFilters}
             />
           </div>

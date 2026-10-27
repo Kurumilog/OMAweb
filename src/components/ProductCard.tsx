@@ -3,6 +3,7 @@ import { Heart, HeartFill } from '@gravity-ui/icons';
 import { Button } from '@gravity-ui/uikit';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
+import { useUser } from '../context/UserContext';
 import { calculateBonusPoints } from '../config/loyalty';
 import servicesData from '../data/services.json';
 
@@ -18,7 +19,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onAddToCart,
 }) => {
   const { items, addToCart } = useCart();
-  const [isFavorite, setIsFavorite] = React.useState(false);
+  const { isFavorite, toggleFavorite } = useUser();
+  const liked = isFavorite(product.id);
 
   const cartItem = items.find((item) => item.product.id === product.id);
   const inCartCount = cartItem ? cartItem.quantity : 0;
@@ -52,17 +54,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
+    toggleFavorite(product.id);
   };
 
   return (
     <div
       onClick={handleCardClick}
       data-name="Custom / Карточка товара"
-      className="bg-white rounded-[20px] p-[16px] border border-[#E2E4E8] flex flex-col gap-[12px] items-start hover:border-[#005DD6] transition-all duration-200 cursor-pointer group shadow-sm hover:shadow-md"
+      className="bg-white rounded-[20px] p-3.5 sm:p-[16px] border border-[#E2E4E8] flex flex-col gap-[10px] sm:gap-[12px] items-start hover:border-[#005DD6] transition-all duration-200 cursor-pointer group shadow-sm hover:shadow-md"
     >
       {/* 1. Медиа-блок 208 px — Figma node 51011:68982 */}
-      <div className="relative h-[208px] rounded-[16px] bg-[#F4F4F6] overflow-hidden flex items-center justify-center shrink-0 w-full">
+      <div className="relative h-[180px] sm:h-[208px] rounded-[16px] bg-[#F4F4F6] overflow-hidden flex items-center justify-center shrink-0 w-full">
         <img
           src={product.image || '/logo_cropped.png'}
           alt={product.name}
@@ -73,7 +75,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Метки: скидка слева вверху */}
         {hasDiscount && (
           <div className="absolute top-[8px] left-[8px] z-10">
-            <span className="bg-[#111111] text-white text-[13px] font-normal leading-[18px] px-[6px] py-[3px] rounded-full inline-block">
+            <span className="bg-[#111111] text-white text-[12px] sm:text-[13px] font-normal leading-[18px] px-[6px] py-[3px] rounded-full inline-block">
               −{discountPercent}%
             </span>
           </div>
@@ -83,13 +85,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <button
           type="button"
           onClick={handleToggleFavorite}
-          className="absolute top-[8px] right-[7.5px] z-10 w-7 h-7 rounded-full bg-white/70 hover:bg-white flex items-center justify-center text-[#111111] hover:text-[#005DD6] transition-colors cursor-pointer shadow-xs"
-          title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+          aria-pressed={liked}
+          className={`absolute top-[8px] right-[7.5px] z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer shadow-xs active:scale-90 ${
+            liked
+              ? 'bg-[#EDF4FF] text-[#005DD6] ring-1 ring-[#005DD6]/30'
+              : 'bg-white/85 hover:bg-white text-[#111111] hover:text-[#005DD6]'
+          }`}
+          title={liked ? 'Удалить из избранного' : 'Добавить в избранное'}
         >
-          {isFavorite ? (
+          {liked ? (
             <HeartFill className="w-4 h-4 text-[#005DD6]" />
           ) : (
-            <Heart className="w-4 h-4 text-[#111111]" />
+            <Heart className="w-4 h-4 text-current" />
           )}
         </button>
 

@@ -14,8 +14,8 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenLoyalty,
 }) => {
   return (
-    <footer className="bg-white border-t border-[#E2E4E8] mt-16 w-full">
-      <div className="max-w-[1440px] mx-auto px-10 py-10 flex flex-col md:flex-row gap-16 items-start justify-between">
+    <footer className="bg-white border-t border-[#E2E4E8] mt-12 sm:mt-16 pb-16 md:pb-0 w-full">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-10 flex flex-col md:flex-row gap-8 md:gap-12 lg:gap-16 items-start justify-between">
         {/* Контакты — Figma node 51011:69771 */}
         <div className="flex flex-col gap-3 w-full md:w-[320px] shrink-0">
           <div className="h-[48px] flex items-center">
@@ -148,7 +148,7 @@ export const Footer: React.FC<FooterProps> = ({
       </div>
 
       <div className="border-t border-[#E2E4E8] py-4">
-        <div className="max-w-[1440px] mx-auto px-10 flex flex-col sm:flex-row items-center justify-between text-[13px] text-[#9A9BA1]">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left text-[12px] sm:text-[13px] text-[#9A9BA1]">
           <p>© 2026 ОМА. Официальный сайт сети гипермаркетов и сервиса «ОМА Мастер».</p>
           <a
             href="https://www.oma.by"

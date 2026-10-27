@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Breadcrumbs, Select, Pagination, Button } from '@gravity-ui/uikit';
-import { Xmark } from '@gravity-ui/icons';
+import { Xmark, HeartFill } from '@gravity-ui/icons';
 import { Product } from '../types';
 import { SHUFFLED_PRODUCTS } from '../utils/catalog';
+import { useUser } from '../context/UserContext';
 import { CATALOG_CATEGORIES } from './SidebarCatalog';
 import { ProductCard } from './ProductCard';
 
@@ -19,6 +20,8 @@ interface CatalogSectionProps {
   onRemoveBrand?: (brand: string) => void;
   onlyWithInstallation?: boolean;
   onToggleOnlyInstallation?: () => void;
+  onlyFavorites?: boolean;
+  onToggleOnlyFavorites?: () => void;
   onResetAllFilters?: () => void;
 }
 
@@ -55,8 +58,11 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
   onRemoveBrand,
   onlyWithInstallation = false,
   onToggleOnlyInstallation,
+  onlyFavorites = false,
+  onToggleOnlyFavorites,
   onResetAllFilters,
 }) => {
+  const { favorites } = useUser();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOption, setSortOption] = useState<string>('popular');
   const pageSize = 8; // Сетка 4x2 по макету
@@ -64,7 +70,7 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
   // Сброс пагинации при смене фильтров
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory, searchQuery, maxPrice, selectedBrands, onlyWithInstallation, sortOption]);
+  }, [selectedCategory, searchQuery, maxPrice, selectedBrands, onlyWithInstallation, onlyFavorites, sortOption]);
 
   const currentCategoryMeta = useMemo(() => {
     return CATALOG_CATEGORIES.find((c) => c.id === selectedCategory) || CATALOG_CATEGORIES[0];
@@ -72,6 +78,9 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
+      if (onlyFavorites) {
+        if (!favorites.includes(p.id)) return false;
+      }
       if (!matchesCategoryFilter(p, selectedCategory)) {
         return false;
       }
@@ -110,7 +119,7 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
       }
       return 0; // 'popular' по умолчанию
     });
-  }, [selectedCategory, searchQuery, maxPrice, selectedBrands, onlyWithInstallation, sortOption]);
+  }, [selectedCategory, searchQuery, maxPrice, selectedBrands, onlyWithInstallation, onlyFavorites, favorites, sortOption]);
 
   const totalItems = filteredProducts.length;
   const paginatedProducts = useMemo(() => {
@@ -122,6 +131,7 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
     maxPrice !== undefined ||
     selectedBrands.length > 0 ||
     onlyWithInstallation ||
+    onlyFavorites ||
     searchQuery
   );
 
@@ -131,22 +141,27 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
       <Breadcrumbs>
         <Breadcrumbs.Item onClick={() => onSelectCategory('all')}>Главная</Breadcrumbs.Item>
         <Breadcrumbs.Item onClick={() => onSelectCategory('all')}>Каталог товаров</Breadcrumbs.Item>
-        {selectedCategory !== 'all' && (
+        {onlyFavorites && <Breadcrumbs.Item>Избранное</Breadcrumbs.Item>}
+        {!onlyFavorites && selectedCategory !== 'all' && (
           <Breadcrumbs.Item>{currentCategoryMeta.title}</Breadcrumbs.Item>
         )}
       </Breadcrumbs>
 
       {/* 2. Заголовок раздела — Figma node 51011:80614 */}
       <div className="space-y-1">
-        <h1 className="text-[28px] md:text-[32px] font-medium leading-[36px] text-[#111111]">
-          {selectedCategory === 'all'
+        <h1 className="text-[24px] sm:text-[28px] md:text-[32px] font-medium leading-tight md:leading-[36px] text-[#111111]">
+          {onlyFavorites
+            ? 'Избранные товары'
+            : selectedCategory === 'all'
             ? searchQuery
               ? `Результаты поиска: «${searchQuery}»`
               : 'Каталог товаров'
             : currentCategoryMeta.title}
         </h1>
-        <p className="text-[15px] leading-[20px] text-[#6E6E73]">
-          {selectedCategory === 'all'
+        <p className="text-[14px] sm:text-[15px] leading-[20px] text-[#6E6E73]">
+          {onlyFavorites
+            ? 'Товары, которые вы сохранили в избранное для быстрого заказа.'
+            : selectedCategory === 'all'
             ? 'Широкий ассортимент товаров для ремонта и обустройства дома с гарантией ОМА.'
             : currentCategoryMeta.description}
         </p>
@@ -178,6 +193,17 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
       {/* 4. Активные фильтры — Figma node 51011:80649 */}
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-2 pt-1">
+          {onlyFavorites && onToggleOnlyFavorites && (
+            <span
+              onClick={onToggleOnlyFavorites}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EDF4FF] text-[#005DD6] text-[13px] font-medium cursor-pointer hover:bg-[#DCEAFF]"
+            >
+              <HeartFill className="w-3.5 h-3.5 text-[#005DD6]" />
+              <span>Только избранное</span>
+              <Xmark className="w-3.5 h-3.5" />
+            </span>
+          )}
+
           {onlyWithInstallation && (
             <span
               onClick={onToggleOnlyInstallation}
@@ -224,7 +250,7 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
 
       {/* 5. Сетка товаров 4x2 — Figma node 51011:80742 */}
       {paginatedProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {paginatedProducts.map((p) => (
             <ProductCard
               key={p.id}
@@ -234,16 +260,20 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
           ))}
         </div>
       ) : (
-        <div className="py-16 text-center bg-white rounded-[24px] border border-[#E2E4E8] p-8 space-y-3">
+        <div className="py-12 sm:py-16 text-center bg-white rounded-[24px] border border-[#E2E4E8] p-6 sm:p-8 space-y-3">
           <p className="text-[17px] font-medium text-[#111111]">
-            По заданным фильтрам товары не найдены
+            {onlyFavorites && favorites.length === 0
+              ? 'В избранном пока нет товаров'
+              : 'По заданным фильтрам товары не найдены'}
           </p>
           <p className="text-[13px] text-[#6E6E73]">
-            Попробуйте изменить параметры фильтрации или сбросить фильтры.
+            {onlyFavorites && favorites.length === 0
+              ? 'Нажмите на сердечко в правом верхнем углу любой карточки товара, чтобы сохранить его здесь.'
+              : 'Попробуйте изменить параметры фильтрации или сбросить фильтры.'}
           </p>
           {onResetAllFilters && (
             <Button view="normal" size="m" onClick={onResetAllFilters} className="mt-2">
-              Сбросить фильтры
+              {onlyFavorites && favorites.length === 0 ? 'Перейти ко всем товарам' : 'Сбросить фильтры'}
             </Button>
           )}
         </div>

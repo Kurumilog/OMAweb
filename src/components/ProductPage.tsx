@@ -17,11 +17,14 @@ import {
   Clock,
   CircleCheck,
   Sparkles,
+  Heart,
+  HeartFill,
 } from '@gravity-ui/icons';
 import { Product, Service } from '../types';
 import { SHUFFLED_PRODUCTS } from '../utils/catalog';
 import servicesData from '../data/services.json';
 import { useCart } from '../context/CartContext';
+import { useUser } from '../context/UserContext';
 import { calculateBonusPoints, formatBYN, BONUS_RATE_SERVICE } from '../config/loyalty';
 import { ProductCard } from './ProductCard';
 import { DateTimeDrawer } from './DateTimeDrawer';
@@ -45,6 +48,8 @@ export const ProductPage: React.FC<ProductPageProps> = ({
   onStartMasterFlow,
 }) => {
   const { addToCart } = useCart();
+  const { isFavorite, toggleFavorite } = useUser();
+  const liked = isFavorite(product.id);
   const [quantity, setQuantity] = useState(1);
   const [mode, setMode] = useState<'product' | 'install'>(product.installable ? 'install' : 'product');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -151,22 +156,52 @@ export const ProductPage: React.FC<ProductPageProps> = ({
       </div>
 
       {/* 2. Intro Title */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-oma-text leading-tight">
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#111111] leading-tight">
           {product.name}
         </h1>
+        <button
+          type="button"
+          onClick={() => toggleFavorite(product.id)}
+          aria-pressed={liked}
+          className={`shrink-0 h-[44px] px-4 rounded-xl border flex items-center gap-2 text-xs sm:text-sm font-medium transition-all cursor-pointer ${
+            liked
+              ? 'bg-[#EDF4FF] border-[#005DD6] text-[#005DD6]'
+              : 'bg-white border-[#E2E4E8] text-[#111111] hover:border-[#005DD6] hover:text-[#005DD6]'
+          }`}
+          title={liked ? 'Удалить из избранного' : 'Добавить в избранное'}
+        >
+          {liked ? (
+            <HeartFill className="w-4 h-4 text-[#005DD6]" />
+          ) : (
+            <Heart className="w-4 h-4" />
+          )}
+          <span className="hidden sm:inline">{liked ? 'В избранном' : 'В избранное'}</span>
+        </button>
       </div>
 
       {/* 3. Main 3-Column Block: Gallery (472px) / Info (480px) / Purchase Panel (360px) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
         {/* Left Column: Gallery (approx 472px) */}
         <div className="lg:col-span-4 xl:col-span-4 space-y-4">
-          <div className="bg-white rounded-3xl p-6 border border-oma-border flex items-center justify-center aspect-square shadow-sm overflow-hidden">
+          <div className="relative bg-white rounded-3xl p-4 sm:p-6 border border-oma-border flex items-center justify-center aspect-square shadow-sm overflow-hidden">
             <img
               src={galleryImages[selectedImageIndex] || product.image}
               alt={product.name}
               className="max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-200 hover:scale-105"
             />
+            <button
+              type="button"
+              onClick={() => toggleFavorite(product.id)}
+              className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-sm ${
+                liked
+                  ? 'bg-[#EDF4FF] text-[#005DD6] ring-1 ring-[#005DD6]/30'
+                  : 'bg-white/90 hover:bg-white text-[#111111] hover:text-[#005DD6]'
+              }`}
+              title={liked ? 'Удалить из избранного' : 'Добавить в избранное'}
+            >
+              {liked ? <HeartFill className="w-5 h-5 text-[#005DD6]" /> : <Heart className="w-5 h-5" />}
+            </button>
           </div>
 
           {/* 4 Thumbnails */}
