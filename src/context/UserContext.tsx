@@ -16,7 +16,7 @@ const defaultUser: UserProfile = {
   id: 'u_demo_1',
   name: 'Александр',
   phone: '+375 (29) 123-45-67',
-  bonusBalance: 45,
+  bonusBalance: 47,
   cardType: 'balans',
   level: 'novice',
   city: 'Минск',

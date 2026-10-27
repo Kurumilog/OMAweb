@@ -6,6 +6,11 @@ import { HomePage } from './components/HomePage';
 import { TaskPage } from './components/TaskPage';
 import { ProductPage } from './components/ProductPage';
 import { MasterPage } from './components/MasterPage';
+import { MasterLandingPage } from './components/MasterLandingPage';
+import { ServicePage } from './components/ServicePage';
+import { MasterApplicationPage, ApplicationOrderData } from './components/MasterApplicationPage';
+import { OrderCabinetPage, CabinetOrder } from './components/OrderCabinetPage';
+import { LoyaltyPage } from './components/LoyaltyPage';
 import { CartPage } from './components/CartPage';
 import { ProfilePanel } from './components/ProfilePanel';
 import { CartDrawer } from './components/CartDrawer';
@@ -14,10 +19,12 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
 import { CartProvider, useCart } from './context/CartContext';
 import { UserProvider } from './context/UserContext';
-import { Product, Task } from './types';
+import { Product, Task, Service } from './types';
 import tasksData from './data/tasks.json';
+import servicesData from './data/services.json';
 
 const allTasks = tasksData as Task[];
+const allServices = servicesData as Service[];
 
 export type View =
   | 'home'
@@ -38,6 +45,9 @@ export const AppContent: React.FC = () => {
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(allTasks[0]);
   const [masterProducts, setMasterProducts] = useState<Product[] | undefined>();
+  const [selectedService, setSelectedService] = useState<Service>(allServices[0]);
+  const [applicationProductSource, setApplicationProductSource] = useState<'oma' | 'own'>('oma');
+  const [currentCabinetOrder, setCurrentCabinetOrder] = useState<CabinetOrder | undefined>();
   const [profileOpen, setProfileOpen] = useState(false);
   const { setIsCartOpen } = useCart();
 
@@ -103,7 +113,8 @@ export const AppContent: React.FC = () => {
   };
 
   const openLoyalty = () => {
-    setProfileOpen(true);
+    setActiveView('loyalty');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const toggleBrand = (brand: string) => {
@@ -147,10 +158,94 @@ export const AppContent: React.FC = () => {
 
       {activeView === 'master' ? (
         <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
-          <MasterPage
-            initialProducts={masterProducts}
-            onBackToCatalog={handleGoHome}
-            onOpenProduct={openProduct}
+          <MasterLandingPage
+            onSelectService={(svc) => {
+              setSelectedService(svc);
+              setActiveView('service');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onOpenOrderCabinet={() => {
+              setActiveView('order-cabinet');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onStartApplication={(svc) => {
+              if (svc) setSelectedService(svc);
+              setActiveView('application');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        </main>
+      ) : activeView === 'service' ? (
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+          <ServicePage
+            service={selectedService || allServices[0]}
+            onBack={() => {
+              setActiveView('master');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onSelectProduct={openProduct}
+            onGoToCatalog={handleGoCatalog}
+            onStartApplication={(svc, src) => {
+              setSelectedService(svc);
+              setApplicationProductSource(src);
+              setActiveView('application');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        </main>
+      ) : activeView === 'application' ? (
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+          <MasterApplicationPage
+            initialService={selectedService}
+            initialProduct={activeProduct}
+            productSource={applicationProductSource}
+            onBack={() => {
+              setActiveView('master');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onCompleteOrder={(orderData: ApplicationOrderData) => {
+              const newOrder: CabinetOrder = {
+                id: 'ord_' + Math.floor(10000 + Math.random() * 90000),
+                orderNumber: String(Math.floor(10000 + Math.random() * 90000)),
+                status: 'on_the_way',
+                serviceTitle: orderData.service.title,
+                productName: orderData.productName,
+                address: `${orderData.address.city}, ${orderData.address.street}, д. ${orderData.address.house}, кв. ${orderData.address.apt}`,
+                dateTime: `${orderData.date} · ${orderData.timeSlot}`,
+                goodsPrice: activeProduct ? activeProduct.price : 0,
+                servicePrice: orderData.service.price * orderData.quantity,
+                deliveryPrice: 8.0,
+                discountBonus: orderData.useBonuses,
+                totalPrice: orderData.totalPrice,
+                earnedBonuses: Math.round(orderData.totalPrice * 0.08),
+                master: {
+                  name: 'Алексей С.',
+                  avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80',
+                  rating: 4.9,
+                  completedOrders: 248,
+                  phone: '+375 (29) 765-43-21',
+                },
+              };
+              setCurrentCabinetOrder(newOrder);
+              setActiveView('order-cabinet');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        </main>
+      ) : activeView === 'order-cabinet' ? (
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+          <OrderCabinetPage
+            order={currentCabinetOrder}
+            onBackToHome={handleGoHome}
+            onGoToCatalog={handleGoCatalog}
+            onOpenLoyalty={openLoyalty}
+          />
+        </main>
+      ) : activeView === 'loyalty' ? (
+        <main className="flex-1 max-w-[1440px] w-full mx-auto px-10 py-8">
+          <LoyaltyPage
+            onGoToCatalog={handleGoCatalog}
+            onOpenMaster={() => openMaster()}
           />
         </main>
       ) : activeView === 'cart' ? (
@@ -158,7 +253,7 @@ export const AppContent: React.FC = () => {
           <CartPage
             onBackToCatalog={handleGoCatalog}
             onProceedToOrder={() => {
-              setActiveView('order-cabinet');
+              setActiveView('application');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onSelectProduct={openProduct}
@@ -170,7 +265,14 @@ export const AppContent: React.FC = () => {
             product={activeProduct}
             onBack={handleGoHome}
             onSelectProduct={openProduct}
-            onStartMasterFlow={(product) => openMaster([product])}
+            onStartMasterFlow={(product) => {
+              setActiveProduct(product);
+              const matchingSvc = allServices.find((s) => s.id === product.serviceId) || allServices[0];
+              setSelectedService(matchingSvc);
+              setApplicationProductSource('oma');
+              setActiveView('application');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         </main>
       ) : activeView === 'task' && activeTask ? (
