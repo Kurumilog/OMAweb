@@ -1,7 +1,29 @@
-# PROGRESS.md — «ОМА Дом»: статус и план (обновлено 2026-10-27 19:05)
+# PROGRESS.md — «ОМА»: статус и план перехода на Figma + Gravity UI (обновлено 2026-10-27 23:45)
 
-## Стек
-React 19 + Vite + TypeScript + Tailwind v4 (`@tailwindcss/vite`). Dev-сервер: `npm run dev` (порт 3000). Данные каталога: `src/data/*.json`. Память: Supermemory v5 (`supermemory` 5.0.3) через серверный proxy в `vite.config.ts` + `server/supermemory.ts`.
+## Стек и зависимости
+React 19.3.1 + Vite 6 + TypeScript 5.7 + Tailwind CSS v4 (`@tailwindcss/vite`) + `@gravity-ui/uikit` 8.0.0 + `@gravity-ui/icons` 2.23.0.
+Все зависимости проверены по lock-файлу и реестру: 0 конфликтов peerDependencies, чистая дедупликация на единый React 19.3.1.
+Память: Supermemory v5 (`supermemory` 5.0.3) через серверный proxy в `vite.config.ts` + `server/supermemory.ts`.
+
+## Статус выполнения плана по Figma (node-id=50997-9056)
+- [x] **Этап 0 (Аудит и зависимости)**:
+  - Изучен проект и 21 фрейм Figma.
+  - Проверены и зафиксированы версии React 19.3.1, `@gravity-ui/uikit` 8.0.0, `@gravity-ui/icons` 2.23.0.
+  - Сборка `npm run build` успешна (921 мс).
+  - Сформирован и сохранён подробный план в `sessions/2026-10-27-figma-gravity-ui-and-dependencies.md`.
+- [ ] **Этап 1 (Foundations, Theme, Layout, Header, Footer, Навигация)**:
+  - Подключение `@gravity-ui/uikit/styles/fonts.css` и `styles.css`.
+  - Обертка `ThemeProvider theme="light"` в `src/main.tsx`.
+  - Токены `.g-root_theme_light` и `@theme` в `src/index.css`.
+  - Обновление Header и Footer по макетам (1440 px, синий #005DD6, кнопки/инпуты Gravity UI).
+  - Очистка от запрещённых надписей («демо», «ОМА Дом», «прокат»).
+- [ ] **Этап 2 (Главная, Задачи, Каталог и поиск, Карточки товаров)**
+- [ ] **Этап 3 (Страница товара, Комплектующие, Выбор даты и времени)**
+- [ ] **Этап 4 (Корзина 06, Вход и регистрация 07)**
+- [ ] **Этап 5 (ОМА Мастер 08, Услуга 09)**
+- [ ] **Этап 6 (5 шагов заявки мастера 10)**
+- [ ] **Этап 7 (Кабинет заказа 11, Баланс 12)**
+- [ ] **Этап 8 (Сквозное тестирование сценария, верификация)**
 
 ## Дизайн-система (готово)
 - Акцент из логотипа: **#005DD6** (hover #004EB8, tint #EDF4FF), логотип `public/logo_cropped.png`.
