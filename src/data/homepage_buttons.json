@@ -53,7 +53,7 @@
     "url": "/",
     "icon": "home",
     "action_type": "nav",
-    "description": "Переход на главную страницу сервиса «ОМА Дом»"
+    "description": "Переход на главную страницу сервиса «ОМА»"
   },
   {
     "section": "header_main",

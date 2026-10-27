@@ -43,7 +43,7 @@ export async function searchUserMemory(
 
 export async function syncUserProfile(user: UserProfile): Promise<boolean> {
   const content = [
-    'Профиль клиента ОМА Дом.',
+    'Профиль клиента ОМА.',
     `Имя: ${user.name || 'не указано'}.`,
     `Город: ${user.city}.`,
     `Телефон: ${user.phone}.`,

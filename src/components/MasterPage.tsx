@@ -440,7 +440,7 @@ export const MasterPage: React.FC<MasterPageProps> = ({
                         <div className="text-[11px] text-oma-text-secondary">
                           {photos.length > 0
                             ? `Загружено ${photos.length} файл(а)`
-                            : 'Нажмите, чтобы прикрепить (демо)'}
+                            : 'Нажмите, чтобы прикрепить'}
                         </div>
                       </div>
                     </div>
@@ -906,7 +906,7 @@ export const MasterPage: React.FC<MasterPageProps> = ({
                         Подтвердить
                       </button>
                       {pinError && (
-                        <span className="text-[11px] text-red-600">Неверный ПИН (демо: 1234)</span>
+                        <span className="text-[11px] text-red-600">Неверный код (1234)</span>
                       )}
                     </div>
                   </div>
