@@ -62,6 +62,7 @@ export const TaskPage: React.FC<TaskPageProps> = ({
 
     task.bundle.forEach((bItem: any) => {
       const found =
+        (bItem.productId ? allProducts.find((p) => p.id === bItem.productId) : undefined) ||
         allProducts.find((p) => {
           const matchesCat =
             p.category === bItem.category || p.categoryPath?.toLowerCase().includes(bItem.category);
@@ -71,8 +72,7 @@ export const TaskPage: React.FC<TaskPageProps> = ({
             p.subCategory?.toLowerCase().includes(filterLower);
           return matchesCat && matchesFilter;
         }) ||
-        allProducts.find((p) => (bItem.filter ? p.name.toLowerCase().includes(bItem.filter.toLowerCase()) : false)) ||
-        (bItem.productId ? allProducts.find((p) => p.id === bItem.productId) : undefined);
+        allProducts.find((p) => (bItem.filter ? p.name.toLowerCase().includes(bItem.filter.toLowerCase()) : false));
 
       if (found) {
         let defaultQty = bItem.qty || bItem.quantity || 1;
@@ -85,8 +85,28 @@ export const TaskPage: React.FC<TaskPageProps> = ({
     });
 
     if (list.length === 0) {
-      const fallback = allProducts.slice(0, 3);
-      fallback.forEach((p) => list.push({ product: p, defaultQty: 1 }));
+      // Smart semantic fallback based on task context — NEVER arbitrary bath faucets!
+      const smartMatches = allProducts.filter((p) => {
+        const pName = p.name.toLowerCase();
+        if (task.id === 'sobrat-mebel') {
+          return pName.includes('мойк') || pName.includes('кухн') || pName.includes('сифон');
+        }
+        if (task.id === 'obnovit-vannuyu') {
+          return pName.includes('ванн') || pName.includes('умывальник') || pName.includes('раковин');
+        }
+        if (task.id === 'zamenit-smesitel') {
+          return pName.includes('смеситель');
+        }
+        if (task.id === 'povesit-svetilnik') {
+          return pName.includes('светильник') || pName.includes('люстра') || pName.includes('лампа');
+        }
+        if (task.id === 'ulozhit-laminat') {
+          return pName.includes('ламинат') || pName.includes('подложк') || pName.includes('плинтус');
+        }
+        return false;
+      }).slice(0, 3);
+
+      smartMatches.forEach((p) => list.push({ product: p, defaultQty: 1 }));
     }
 
     return list;
@@ -127,6 +147,8 @@ export const TaskPage: React.FC<TaskPageProps> = ({
     });
   };
 
+  const [bundleAdded, setBundleAdded] = useState(false);
+
   const handleAddAllToCart = () => {
     const productsToAdd = bundleItems.map((b) => ({
       product: b.product,
@@ -134,8 +156,9 @@ export const TaskPage: React.FC<TaskPageProps> = ({
       withInstallation: mode === 'master',
     }));
 
-    addBundle(productsToAdd);
-    alert('Комплект задачи успешно добавлен в корзину!');
+    addBundle(productsToAdd, mode === 'master' ? service : null);
+    setBundleAdded(true);
+    setTimeout(() => setBundleAdded(false), 3000);
   };
 
   return (
@@ -402,10 +425,16 @@ export const TaskPage: React.FC<TaskPageProps> = ({
             size="l"
             width="max"
             onClick={handleAddAllToCart}
-            className="!h-[52px] !rounded-[12px] !text-[15px] !bg-[#005DD6] hover:!bg-[#004EB8] !text-white !font-normal"
+            className="!h-[52px] !rounded-[12px] !text-[15px] !bg-[#005DD6] hover:!bg-[#004EB8] !text-white !font-medium !w-full !px-3 sm:!px-4 transition-colors shadow-xs"
           >
-            Добавить всё в корзину · {grandTotal.toFixed(2)} руб.
+            <span className="truncate">Добавить всё в корзину</span>
           </Button>
+
+          {bundleAdded && (
+            <div className="p-3 bg-[#EDF9F0] border border-[#2D8B5D]/30 rounded-[12px] text-center text-[#2D8B5D] text-[13px] font-semibold animate-fadeIn">
+              ✓ Комплект задачи добавлен в корзину!
+            </div>
+          )}
 
           <p className="text-[13px] text-[#6E6E73] text-center">
             Фиксированная цена работы и официальная гарантия 12 месяцев.

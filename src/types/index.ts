@@ -19,9 +19,24 @@ export interface Product {
   url?: string;
 }
 
+export type ServiceCategoryId =
+  | 'santekhnika'
+  | 'elektrika'
+  | 'mebel'
+  | 'otdelka'
+  | 'dveri'
+  | 'tekhnika'
+  | 'sanuzel'
+  | 'prochee';
+
 export interface Service {
   id: string;
   title: string;
+  category?: ServiceCategoryId;
+  categoryLabel?: string;
+  image?: string;
+  unit?: string;
+  popular?: boolean;
   type: 'fixed' | 'measure';
   price: number;
   duration: string;
@@ -76,11 +91,26 @@ export type OrderStatus =
   | 'acceptance'
   | 'review';
 
+export interface ActiveCoupon {
+  id: string;
+  code: string;
+  title: string;
+  discount: string;
+  expiresInDays: number;
+  minSpend?: number;
+  maxDiscountCap: number;
+  activatedAt: string;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
   phone: string;
   bonusBalance: number;
+  activityPoints?: number;
+  aov?: number;
+  activeCoupons?: ActiveCoupon[];
+  appliedCoupon?: ActiveCoupon | null;
   cardType: 'balans' | 'vybiraem_sami';
   level: 'novice' | 'master_home' | 'expert';
   city: string;

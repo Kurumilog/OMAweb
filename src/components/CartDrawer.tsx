@@ -14,6 +14,7 @@ import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
 import { formatBYN, formatPoints } from '../config/loyalty';
 import { Product } from '../types';
+import { groupCartIntoServiceChecks } from '../utils/serviceChecks';
 
 interface CartDrawerProps {
   onOpenMaster?: (products?: Product[]) => void;
@@ -38,12 +39,22 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenMaster }) => {
   } = useCart();
 
   const { user } = useUser();
-  const [deliveryMode, setDeliveryMode] = useState<'pickup' | 'curb' | 'floor'>('curb');
+  const hasMasterService = items.some((i) => Boolean(i.installService));
+  const [deliveryMode, setDeliveryMode] = useState<'pickup' | 'curb' | 'floor' | 'master'>(
+    hasMasterService ? 'master' : 'curb'
+  );
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+
+  React.useEffect(() => {
+    if (hasMasterService) {
+      setDeliveryMode('master');
+    }
+  }, [hasMasterService]);
 
   if (!isCartOpen) return null;
 
-  const deliveryCost = deliveryMode === 'pickup' ? 0 : deliveryMode === 'curb' ? 12 : 24;
+  const checksBreakdown = groupCartIntoServiceChecks(items);
+  const deliveryCost = hasMasterService ? 0 : deliveryMode === 'pickup' ? 0 : deliveryMode === 'curb' ? 12 : 24;
   const finalPayable = grandTotal + deliveryCost;
 
   const handleApplyMaxBonuses = () => {
@@ -196,50 +207,94 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenMaster }) => {
             </div>
 
             {/* Delivery Options */}
-            <div className="bg-white p-4 rounded-2xl border border-oma-border">
-              <span className="text-xs font-bold text-oma-text block mb-2.5">
-                Способ получения
-              </span>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setDeliveryMode('pickup')}
-                  className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
-                    deliveryMode === 'pickup'
-                      ? 'border-oma-blue bg-oma-blue-tint'
-                      : 'border-oma-border bg-white hover:bg-oma-bg'
-                  }`}
-                >
-                  <div className="font-semibold text-oma-text">Самовывоз</div>
-                  <div className="text-[11px] text-oma-blue font-medium">0 руб.</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDeliveryMode('curb')}
-                  className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
-                    deliveryMode === 'curb'
-                      ? 'border-oma-blue bg-oma-blue-tint'
-                      : 'border-oma-border bg-white hover:bg-oma-bg'
-                  }`}
-                >
-                  <div className="font-semibold text-oma-text">До подъезда</div>
-                  <div className="text-[11px] text-oma-text-secondary">12.00 руб.</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDeliveryMode('floor')}
-                  className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
-                    deliveryMode === 'floor'
-                      ? 'border-oma-blue bg-oma-blue-tint'
-                      : 'border-oma-border bg-white hover:bg-oma-bg'
-                  }`}
-                >
-                  <div className="font-semibold text-oma-text">С подъёмом</div>
-                  <div className="text-[11px] text-oma-text-secondary">24.00 руб.</div>
-                </button>
+            <div className="bg-white p-4 rounded-2xl border border-oma-border space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-oma-text block">
+                  Способ получения
+                </span>
+                {hasMasterService && (
+                  <span className="text-[11px] font-semibold text-[#2D8B5D] bg-[#EDF9F0] px-2 py-0.5 rounded-full border border-[#2D8B5D]/20">
+                    Бесплатно с мастером
+                  </span>
+                )}
               </div>
+
+              {hasMasterService ? (
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode('master')}
+                    className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                      deliveryMode === 'master'
+                        ? 'border-[#2D8B5D] bg-[#EDF9F0]/60 ring-1 ring-[#2D8B5D]'
+                        : 'border-oma-border bg-white hover:bg-oma-bg'
+                    }`}
+                  >
+                    <div className="font-semibold text-oma-text">Доставка мастером</div>
+                    <div className="text-[11px] text-[#2D8B5D] font-bold">Бесплатно</div>
+                    <div className="text-[10px] text-oma-text-secondary mt-1 leading-tight">
+                      Мастер привезёт товар к началу работ
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode('pickup')}
+                    className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                      deliveryMode === 'pickup'
+                        ? 'border-oma-blue bg-oma-blue-tint'
+                        : 'border-oma-border bg-white hover:bg-oma-bg'
+                    }`}
+                  >
+                    <div className="font-semibold text-oma-text">Самовывоз</div>
+                    <div className="text-[11px] text-oma-blue font-medium">Бесплатно</div>
+                    <div className="text-[10px] text-oma-text-secondary mt-1 leading-tight">
+                      Забрать в гипермаркете ОМА
+                    </div>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode('pickup')}
+                    className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                      deliveryMode === 'pickup'
+                        ? 'border-oma-blue bg-oma-blue-tint'
+                        : 'border-oma-border bg-white hover:bg-oma-bg'
+                    }`}
+                  >
+                    <div className="font-semibold text-oma-text">Самовывоз</div>
+                    <div className="text-[11px] text-oma-blue font-medium">0 руб.</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode('curb')}
+                    className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                      deliveryMode === 'curb'
+                        ? 'border-oma-blue bg-oma-blue-tint'
+                        : 'border-oma-border bg-white hover:bg-oma-bg'
+                    }`}
+                  >
+                    <div className="font-semibold text-oma-text">До подъезда</div>
+                    <div className="text-[11px] text-oma-text-secondary">12.00 руб.</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode('floor')}
+                    className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                      deliveryMode === 'floor'
+                        ? 'border-oma-blue bg-oma-blue-tint'
+                        : 'border-oma-border bg-white hover:bg-oma-bg'
+                    }`}
+                  >
+                    <div className="font-semibold text-oma-text">С подъёмом</div>
+                    <div className="text-[11px] text-oma-text-secondary">24.00 руб.</div>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Loyalty Points */}
@@ -247,7 +302,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenMaster }) => {
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center space-x-1.5 font-bold text-oma-text">
                   <Sparkles className="w-4 h-4 text-oma-blue" />
-                  <span>Карта «Баланс»</span>
+                  <span>Программа лояльности</span>
                 </div>
                 <span className="text-xs text-oma-text-secondary">
                   Доступно: <strong className="text-oma-blue">{formatPoints(user.bonusBalance)}</strong>
@@ -256,7 +311,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenMaster }) => {
 
               <div className="flex items-center justify-between text-xs pt-2 border-t border-oma-border/60">
                 <span className="text-oma-text-secondary">
-                  Списать до 30% ({maxBonusesAllowed} Б)
+                  Списать до 20% ({maxBonusesAllowed} руб.)
                 </span>
                 <button
                   type="button"
@@ -265,7 +320,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenMaster }) => {
                 >
                   {bonusesToSpend > 0
                     ? 'Отменить'
-                    : `Списать ${Math.min(user.bonusBalance, maxBonusesAllowed)} Б`}
+                    : `Списать ${Math.min(user.bonusBalance, maxBonusesAllowed)} руб.`}
                 </button>
               </div>
             </div>
@@ -275,6 +330,22 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenMaster }) => {
         {/* Footer */}
         {items.length > 0 && !checkoutSuccess && (
           <div className="p-5 border-t border-oma-border bg-white space-y-3">
+            {checksBreakdown.serviceChecks.length > 1 && (
+              <div className="p-2.5 rounded-xl bg-[#EDF4FF] border border-[#005DD6]/20 space-y-1.5 text-xs">
+                <div className="font-bold text-[#005DD6]">
+                  Разделено на {checksBreakdown.serviceChecks.length} отдельных чека (разные услуги):
+                </div>
+                {checksBreakdown.serviceChecks.map((chk) => (
+                  <div key={chk.service.id} className="flex items-center justify-between text-[11px] text-[#111111]">
+                    <span className="truncate pr-2">
+                      Чек №{chk.checkNumber}: {chk.service.title}
+                    </span>
+                    <span className="font-bold shrink-0">{formatBYN(chk.total)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="space-y-1.5 text-xs text-oma-text-secondary">
               <div className="flex justify-between">
                 <span>Товары</span>
@@ -286,10 +357,20 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onOpenMaster }) => {
                   <span>+{formatBYN(servicesTotal)}</span>
                 </div>
               )}
-              {deliveryCost > 0 && (
+              {hasMasterService ? (
+                <div className="flex justify-between text-[#2D8B5D] font-medium">
+                  <span>Доставка</span>
+                  <span>Бесплатно мастером</span>
+                </div>
+              ) : deliveryCost > 0 ? (
                 <div className="flex justify-between">
                   <span>Доставка</span>
                   <span>+{formatBYN(deliveryCost)}</span>
+                </div>
+              ) : (
+                <div className="flex justify-between text-[#2D8B5D] font-medium">
+                  <span>Доставка</span>
+                  <span>Бесплатно</span>
                 </div>
               )}
               {bonusesToSpend > 0 && (

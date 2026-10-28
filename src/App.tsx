@@ -5,7 +5,6 @@ import { CatalogSection } from './components/CatalogSection';
 import { HomePage } from './components/HomePage';
 import { TaskPage } from './components/TaskPage';
 import { ProductPage } from './components/ProductPage';
-import { MasterPage } from './components/MasterPage';
 import { MasterLandingPage } from './components/MasterLandingPage';
 import { ServicePage } from './components/ServicePage';
 import { MasterApplicationPage, ApplicationOrderData } from './components/MasterApplicationPage';
@@ -23,6 +22,8 @@ import { Product, Task, Service } from './types';
 import { SHUFFLED_PRODUCTS } from './utils/catalog';
 import tasksData from './data/tasks.json';
 import servicesData from './data/services.json';
+import { saveActiveMasterOrder, getActiveMasterOrder } from './lib/masterMemory';
+import { groupCartIntoServiceChecks, resolveServiceForProduct } from './utils/serviceChecks';
 
 const allProducts = SHUFFLED_PRODUCTS;
 const allTasks = tasksData as Task[];
@@ -125,9 +126,12 @@ export const AppContent: React.FC = () => {
     return allServices[0];
   });
   const [applicationProductSource, setApplicationProductSource] = useState<'oma' | 'own'>('oma');
-  const [currentCabinetOrder, setCurrentCabinetOrder] = useState<CabinetOrder | undefined>();
+  const [applicationProducts, setApplicationProducts] = useState<{ product: Product; quantity: number }[]>([]);
+  const [currentCabinetOrder, setCurrentCabinetOrder] = useState<CabinetOrder | undefined>(
+    () => getActiveMasterOrder() || undefined
+  );
   const [profileOpen, setProfileOpen] = useState(false);
-  const { setIsCartOpen } = useCart();
+  const { items, setIsCartOpen, removeFromCart, clearCart } = useCart();
 
   // Состояние фильтрации для каталога
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
@@ -336,6 +340,9 @@ export const AppContent: React.FC = () => {
             }}
             onStartApplication={(svc) => {
               if (svc) setSelectedService(svc);
+              setActiveProduct(null);
+              setApplicationProducts([]);
+              setApplicationProductSource('oma');
               setActiveView('application');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
@@ -351,9 +358,16 @@ export const AppContent: React.FC = () => {
             }}
             onSelectProduct={openProduct}
             onGoToCatalog={handleGoCatalog}
-            onStartApplication={(svc, src) => {
+            onStartApplication={(svc, src, attachedProduct) => {
               setSelectedService(svc);
               setApplicationProductSource(src);
+              if (attachedProduct && src === 'oma') {
+                setActiveProduct(attachedProduct);
+                setApplicationProducts([{ product: attachedProduct, quantity: 1 }]);
+              } else {
+                setActiveProduct(null);
+                setApplicationProducts([]);
+              }
               setActiveView('application');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
@@ -364,35 +378,37 @@ export const AppContent: React.FC = () => {
           <MasterApplicationPage
             initialService={selectedService}
             initialProduct={activeProduct}
+            initialProducts={applicationProducts}
             productSource={applicationProductSource}
             onBack={() => {
               setActiveView('master');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onCompleteOrder={(orderData: ApplicationOrderData) => {
-              const newOrder: CabinetOrder = {
-                id: 'ord_' + Math.floor(10000 + Math.random() * 90000),
-                orderNumber: String(Math.floor(10000 + Math.random() * 90000)),
-                status: 'on_the_way',
-                serviceTitle: orderData.service.title,
-                productName: orderData.productName,
-                address: `${orderData.address.city}, ${orderData.address.street}, д. ${orderData.address.house}, кв. ${orderData.address.apt}`,
-                dateTime: `${orderData.date} · ${orderData.timeSlot}`,
-                goodsPrice: activeProduct ? activeProduct.price : 0,
-                servicePrice: orderData.service.price * orderData.quantity,
-                deliveryPrice: 8.0,
-                discountBonus: orderData.useBonuses,
-                totalPrice: orderData.totalPrice,
-                earnedBonuses: Math.round(orderData.totalPrice * 0.08),
-                master: {
-                  name: 'Алексей С.',
-                  avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80',
-                  rating: 4.9,
-                  completedOrders: 248,
-                  phone: '+375 (29) 765-43-21',
-                },
-              };
+              const newOrder = saveActiveMasterOrder(orderData, activeProduct);
               setCurrentCabinetOrder(newOrder);
+
+              // Clear ordered items from the cart
+              const orderedProducts = orderData.productsList || [];
+              const orderedSkusOrNames = new Set(
+                orderedProducts.map((p) => p.sku || p.name)
+              );
+
+              const itemsToRemove = items.filter(
+                (item) =>
+                  orderedSkusOrNames.has(item.product.sku) ||
+                  orderedSkusOrNames.has(item.product.name) ||
+                  (item.installService && item.installService.id === orderData.service.id)
+              );
+
+              if (itemsToRemove.length === 0 || itemsToRemove.length >= items.length) {
+                // Whole cart or single check was ordered -> clear cart completely
+                clearCart();
+              } else {
+                // If user had multiple separate checks in cart, remove only the ordered check's items
+                itemsToRemove.forEach((item) => removeFromCart(item.product.id));
+              }
+
               setActiveView('order-cabinet');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
@@ -418,7 +434,30 @@ export const AppContent: React.FC = () => {
         <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8">
           <CartPage
             onBackToCatalog={handleGoCatalog}
-            onProceedToOrder={() => {
+            onProceedToOrder={(targetServiceId?: string) => {
+              const breakdown = groupCartIntoServiceChecks(items, true);
+              const targetCheck = targetServiceId
+                ? breakdown.serviceChecks.find((c) => c.service.id === targetServiceId) || breakdown.serviceChecks[0]
+                : breakdown.serviceChecks[0];
+
+              if (targetCheck) {
+                setSelectedService(targetCheck.service);
+                setApplicationProducts(
+                  targetCheck.items.map((i) => ({ product: i.product, quantity: i.quantity }))
+                );
+                setActiveProduct(targetCheck.items[0]?.product || null);
+                setApplicationProductSource('oma');
+              } else if (items.length > 0) {
+                const fallbackSvc = resolveServiceForProduct(items[0].product) || allServices[0];
+                setSelectedService(fallbackSvc);
+                setApplicationProducts([{ product: items[0].product, quantity: items[0].quantity }]);
+                setActiveProduct(items[0].product);
+                setApplicationProductSource('oma');
+              } else {
+                setApplicationProducts([]);
+                setActiveProduct(null);
+                setApplicationProductSource('own');
+              }
               setActiveView('application');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
@@ -440,6 +479,7 @@ export const AppContent: React.FC = () => {
             onSelectProduct={openProduct}
             onStartMasterFlow={(product) => {
               setActiveProduct(product);
+              setApplicationProducts([{ product, quantity: 1 }]);
               const matchingSvc = allServices.find((s) => s.id === product.serviceId) || allServices[0];
               setSelectedService(matchingSvc);
               setApplicationProductSource('oma');

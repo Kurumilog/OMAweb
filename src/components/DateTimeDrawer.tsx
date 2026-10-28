@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Drawer, Button, TextInput } from '@gravity-ui/uikit';
-import { Xmark, ChevronLeft, ChevronRight, GeoPin, Clock, Calendar } from '@gravity-ui/icons';
+import { Xmark, ChevronLeft, ChevronRight, GeoPin, House, Clock, Calendar } from '@gravity-ui/icons';
 
 interface DateTimeDrawerProps {
   open: boolean;
@@ -221,7 +221,7 @@ export const DateTimeDrawer: React.FC<DateTimeDrawerProps> = ({
           <div className="pt-2 border-t border-oma-border space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-oma-text flex items-center gap-1.5">
-                <GeoPin className="w-4 h-4 text-oma-blue" />
+                <House className="w-4 h-4 text-oma-blue" />
                 Адрес проведения работ
               </span>
               <button

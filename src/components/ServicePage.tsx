@@ -1,19 +1,23 @@
-import React, { useState, useMemo } from 'react';
-import { Button, Disclosure } from '@gravity-ui/uikit';
-import { ArrowLeft, Check, CircleCheck, ShieldCheck, Clock } from '@gravity-ui/icons';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Button, Checkbox } from '@gravity-ui/uikit';
+import { Check, Sparkles, ArrowLeft } from '@gravity-ui/icons';
 import { Service, Product } from '../types';
-import productsData from '../data/products.json';
-import { ProductCard } from './ProductCard';
-import { formatBYN } from '../config/loyalty';
+import { SHUFFLED_PRODUCTS } from '../utils/catalog';
+import { formatBYN, calculateBonusPoints } from '../config/loyalty';
+import { useCart } from '../context/CartContext';
 
-const allProducts = productsData as Product[];
+const allProducts = SHUFFLED_PRODUCTS;
 
 interface ServicePageProps {
   service: Service;
   onBack: () => void;
   onSelectProduct: (product: Product) => void;
   onGoToCatalog: () => void;
-  onStartApplication: (service: Service, productSource: 'oma' | 'own') => void;
+  onStartApplication: (
+    service: Service,
+    productSource: 'oma' | 'own',
+    attachedProduct?: Product | null
+  ) => void;
 }
 
 export const ServicePage: React.FC<ServicePageProps> = ({
@@ -23,261 +27,337 @@ export const ServicePage: React.FC<ServicePageProps> = ({
   onGoToCatalog,
   onStartApplication,
 }) => {
+  const { addToCart } = useCart();
   const [productSource, setProductSource] = useState<'oma' | 'own'>('oma');
+  const [needConsumables, setNeedConsumables] = useState<boolean>(true);
 
-  // Find 2 matching products that link to this service
+  // Relevant products for this specific service
   const matchingProducts = useMemo(() => {
-    const list = allProducts.filter((p) => p.serviceId === service.id || p.installable);
-    return list.slice(0, 2);
-  }, [service.id]);
+    const exactMatch = allProducts.filter((p) => p.serviceId === service.id);
+    if (exactMatch.length >= 3) return exactMatch.slice(0, 3);
+
+    const categoryMap: Record<string, string[]> = {
+      santekhnika: ['santekhnika'],
+      sanuzel: ['santekhnika'],
+      elektrika: ['elektrika'],
+      otdelka: ['otdelka', 'stroymaterialy'],
+      dveri: ['stroymaterialy', 'otdelka'],
+      mebel: ['instrument', 'stroymaterialy'],
+      tekhnika: ['santekhnika', 'elektrika'],
+      prochee: ['instrument'],
+    };
+
+    const targetCats = categoryMap[service.category || 'santekhnika'] || ['santekhnika'];
+    const byCategory = allProducts.filter(
+      (p) =>
+        exactMatch.every((em) => em.id !== p.id) &&
+        targetCats.includes(p.category)
+    );
+
+    return [...exactMatch, ...byCategory].slice(0, 3);
+  }, [service.id, service.category]);
+
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(() =>
+    matchingProducts[0]?.id || null
+  );
+
+  useEffect(() => {
+    setSelectedProductId(matchingProducts[0]?.id || null);
+  }, [matchingProducts]);
+
+  const attachedProduct = useMemo(() => {
+    if (productSource !== 'oma' || !selectedProductId) return null;
+    return matchingProducts.find((p) => p.id === selectedProductId) || null;
+  }, [productSource, selectedProductId, matchingProducts]);
+
+  const consumablesPrice = needConsumables ? 14.0 : 0;
+  const productPrice = attachedProduct ? attachedProduct.price : 0;
+  const totalOrderPrice = service.price + productPrice + consumablesPrice;
+  const serviceBonuses = Math.max(2, Math.round(service.price * (service.bonusRate || 0.05)));
+  const productBonuses = attachedProduct ? calculateBonusPoints(attachedProduct.price + consumablesPrice) : 0;
+  const totalBonuses = serviceBonuses + productBonuses;
+
+  const handleProceed = () => {
+    if (productSource === 'oma' && attachedProduct) {
+      addToCart(attachedProduct, 1, true);
+    }
+    onStartApplication(service, productSource, attachedProduct);
+  };
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* 1. Breadcrumbs */}
-      <div className="flex items-center justify-between text-xs text-oma-text-secondary">
-        <div className="flex items-center space-x-1.5 flex-wrap">
-          <button
-            type="button"
-            onClick={onBack}
-            className="hover:text-oma-blue transition-colors cursor-pointer"
-          >
-            Главная
-          </button>
-          <span>/</span>
-          <button
-            type="button"
-            onClick={onBack}
-            className="hover:text-oma-blue transition-colors cursor-pointer"
-          >
-            ОМА Мастер
-          </button>
-          <span>/</span>
-          <span className="text-oma-text font-medium truncate max-w-xs">{service.title}</span>
+    <div className="space-y-6 pb-16">
+      {/* 1. Navigation & Breadcrumbs */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#6E6E73] hover:text-[#005DD6] transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Назад к услугам</span>
+        </button>
+        <span className="text-[#E2E4E8]">/</span>
+        <span className="text-[13px] text-[#6E6E73]">{service.categoryLabel || 'Услуга'}</span>
+      </div>
+
+      {/* 2. Hero Header: Photo, Title & Badges */}
+      <div className="bg-white rounded-[24px] border border-[#E2E4E8] overflow-hidden shadow-xs">
+        <div className="grid grid-cols-1 md:grid-cols-12 items-stretch">
+          <div className="md:col-span-5 relative min-h-[200px] sm:min-h-[230px] bg-[#F4F4F6]">
+            <img
+              src={service.image || `/services/${service.id}.jpg`}
+              alt={service.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/40 via-transparent to-transparent pointer-events-none" />
+          </div>
+
+          <div className="md:col-span-7 p-6 sm:p-7 flex flex-col justify-between space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                {service.type === 'fixed' ? (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-semibold bg-[#EDF4FF] text-[#005DD6]">
+                    Фиксированная цена
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-semibold bg-[#FFF4E5] text-[#B25E00] border border-[#FFE0B2]">
+                    Цена обговаривается
+                  </span>
+                )}
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-[#F4F4F6] text-[#6E6E73]">
+                  Гарантия {service.warrantyMonths} мес.
+                </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-[#F4F4F6] text-[#6E6E73]">
+                  Время: ~{service.duration}
+                </span>
+              </div>
+
+              <h1 className="text-[22px] sm:text-[28px] font-bold text-[#111111] leading-tight">
+                {service.title}
+              </h1>
+
+              <p className="text-[13px] text-[#6E6E73] leading-relaxed">
+                Сертифицированные мастера сети ОМА. Выезд по Минску и до 15 км от МКАД, соблюдение стандартов монтажа и фиксированная смета в акте выполненных работ.
+              </p>
+            </div>
+
+            <div className="pt-2 border-t border-[#E2E4E8]/60 flex items-center justify-between gap-3 flex-wrap">
+              <span className="text-[22px] font-bold text-[#111111]">
+                {service.type === 'fixed' ? formatBYN(service.price) : `от ${formatBYN(service.price)}`}
+                {service.unit && <span className="text-[13px] font-normal text-[#6E6E73] ml-1">/ {service.unit}</span>}
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#005DD6] bg-[#EDF4FF] px-3 py-1 rounded-full">
+                <Sparkles className="w-3.5 h-3.5 text-[#005DD6]" />
+                +{serviceBonuses} Б на «Баланс»
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 2. Header & Intro (Figma 51011:75415) */}
-      <div className="space-y-2">
-        <h1 className="text-3xl sm:text-4xl font-bold text-oma-text leading-tight">
-          {service.title}
-        </h1>
-        <p className="text-base text-oma-text-secondary">
-          Профессиональная установка с официальной гарантией 12 месяцев от сети ОМА
-        </p>
-      </div>
-
-      {/* 3. Main 2-Column Layout: Details (Left) / Order Panel (Right 360px) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* Work Scope Panel (Figma 51011:75420) */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-oma-border shadow-sm space-y-5">
-            <h2 className="text-xl sm:text-2xl font-bold text-oma-text">
-              Аккуратно установим и всё проверим
+      {/* 3. Main 2-Column Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column (8 cols): Work Scope & Materials */}
+        <div className="lg:col-span-8 space-y-5">
+          {/* Work Scope */}
+          <div className="bg-white rounded-[20px] p-6 border border-[#E2E4E8] space-y-4">
+            <h2 className="text-[18px] font-semibold text-[#111111]">
+              Что входит в стоимость
             </h2>
-            <p className="text-sm text-oma-text-secondary leading-relaxed">
-              Мастер демонтирует старое оборудование, выполнит аккуратный монтаж, подключит подводку и
-              проверит работоспособность и герметичность соединений.
-            </p>
 
-            {/* Accordions */}
-            <div className="space-y-2 pt-2 border-y border-oma-border py-4">
-              <Disclosure
-                summary={<span className="text-sm font-semibold text-oma-text">Что входит</span>}
-                defaultExpanded
-              >
-                <ul className="text-xs text-oma-text-secondary space-y-1.5 pt-2 pl-2">
-                  {service.includes.map((inc, i) => (
-                    <li key={i} className="flex items-start gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-oma-blue shrink-0 mt-0.5" />
-                      <span>{inc}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Disclosure>
-
-              <Disclosure
-                summary={<span className="text-sm font-semibold text-oma-text">Что не входит</span>}
-              >
-                <ul className="text-xs text-oma-text-secondary space-y-1.5 pt-2 pl-2">
-                  {service.excludes.map((exc, i) => (
-                    <li key={i} className="flex items-start gap-1.5">
-                      <span className="text-oma-text-tertiary">✕</span>
-                      <span>{exc}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Disclosure>
-            </div>
-
-            <div className="space-y-1.5 pt-1">
-              <h3 className="text-sm font-bold text-oma-text">Входит в фиксированную цену</h3>
-              <p className="text-xs text-oma-text-secondary">
-                Демонтаж · Установка · Подключение · Проверка работы · Уборка мусора
-              </p>
-            </div>
-
-            <div className="space-y-1.5 pt-1">
-              <h3 className="text-sm font-bold text-oma-text">Не входит</h3>
-              <p className="text-xs text-oma-text-secondary leading-relaxed">
-                Расходные материалы, переделка коммуникаций и нестандартные доработки. Любые дополнительные
-                работы производятся только после согласования с вами.
-              </p>
-            </div>
-          </div>
-
-          {/* Required Products Section (Figma 51011:75498) */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-oma-border shadow-sm space-y-5">
-            <h2 className="text-xl sm:text-2xl font-bold text-oma-text">Товары для установки</h2>
-            <p className="text-xs text-oma-text-secondary">
-              Вы можете заказать товар в ОМА вместе с установкой со скидкой или использовать свой товар.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {matchingProducts.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  onSelectProduct={onSelectProduct}
-                />
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[14px] text-[#111111]">
+              {service.includes.map((inc, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-[#EDF4FF] text-[#005DD6] flex items-center justify-center shrink-0 mt-0.5">
+                    <Check className="w-3.5 h-3.5" />
+                  </span>
+                  <span className="leading-snug">{inc}</span>
+                </li>
               ))}
-            </div>
+            </ul>
 
-            <Button
-              view="normal"
-              size="l"
-              className="!rounded-xl !font-semibold"
-              onClick={onGoToCatalog}
-            >
-              Смотреть все товары в каталоге ОМА
-            </Button>
+            {service.excludes && service.excludes.length > 0 && (
+              <div className="pt-3 border-t border-[#E2E4E8]/60 text-[12px] text-[#6E6E73]">
+                <span className="font-medium text-[#111111]">Не входит в базовый тариф: </span>
+                {service.excludes.join('; ')}.
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Right Column: Order Panel (360px / 4 cols) (Figma 51011:75744) */}
-        <div className="lg:col-span-4 sticky top-6">
-          <div className="bg-white rounded-3xl p-6 border border-oma-border shadow-sm space-y-5">
-            <span className="inline-flex items-center text-xs font-semibold text-oma-blue bg-oma-tint px-3 py-1 rounded-full">
-              Фиксированная цена
-            </span>
+          {/* Equipment & Consumables */}
+          <div className="bg-white rounded-[20px] p-6 border border-[#E2E4E8] space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h2 className="text-[18px] font-semibold text-[#111111]">
+                Оборудование и материалы
+              </h2>
 
-            <div className="text-4xl font-extrabold text-oma-text">
-              {formatBYN(service.price)}
-            </div>
-
-            <div className="space-y-2 text-xs text-oma-text border-y border-oma-border py-3">
-              <div className="flex items-center justify-between">
-                <span className="text-oma-text-secondary">Срок выезда</span>
-                <span className="font-semibold text-oma-text">в течение 1–3 дней</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-oma-text-secondary">Гарантия</span>
-                <span className="font-semibold text-oma-text">12 месяцев</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-oma-text-secondary">Бонусы «Баланс»</span>
-                <span className="font-semibold text-oma-blue">+3 Б после приёмки</span>
-              </div>
-            </div>
-
-            {/* Segmented Switcher: Товар купил в OMA / Товар свой */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-oma-text">Происхождение товара:</label>
-              <div className="flex rounded-xl bg-[#ecedf0] p-1 border border-oma-border/60">
+              {/* Segmented Switcher */}
+              <div className="grid grid-cols-2 gap-1 rounded-[12px] bg-[#ECEDF0] p-1 border border-[#E2E4E8] shrink-0 sm:w-[280px]">
                 <button
                   type="button"
                   onClick={() => setProductSource('oma')}
-                  className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all cursor-pointer ${
+                  className={`h-[34px] px-3 text-[13px] font-medium rounded-[8px] flex items-center justify-center transition-all cursor-pointer ${
                     productSource === 'oma'
-                      ? 'bg-white text-oma-text font-bold shadow-sm'
-                      : 'text-oma-text-secondary hover:text-oma-text'
+                      ? 'bg-[#005DD6] text-white shadow-xs'
+                      : 'text-[#6E6E73] hover:text-[#111111]'
                   }`}
                 >
-                  Товар купил в OMA
+                  Купить в ОМА
                 </button>
                 <button
                   type="button"
                   onClick={() => setProductSource('own')}
-                  className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all cursor-pointer ${
+                  className={`h-[34px] px-3 text-[13px] font-medium rounded-[8px] flex items-center justify-center transition-all cursor-pointer ${
                     productSource === 'own'
-                      ? 'bg-oma-blue text-white font-bold shadow-sm'
-                      : 'text-oma-text-secondary hover:text-oma-text'
+                      ? 'bg-white text-[#111111] shadow-xs'
+                      : 'text-[#6E6E73] hover:text-[#111111]'
                   }`}
                 >
-                  Товар свой
+                  Товар уже есть
                 </button>
               </div>
             </div>
 
-            {/* CTA Button */}
+            {productSource === 'oma' ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {matchingProducts.map((p) => {
+                    const isSelected = selectedProductId === p.id;
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => setSelectedProductId(isSelected ? null : p.id)}
+                        className={`rounded-[16px] p-3 border transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                          isSelected
+                            ? 'border-[#005DD6] bg-[#EDF4FF]/30 ring-1 ring-[#005DD6]'
+                            : 'border-[#E2E4E8] bg-white hover:border-[#005DD6]/50'
+                        }`}
+                      >
+                        <div className="space-y-2">
+                          <div className="h-[90px] rounded-[10px] bg-white p-2 flex items-center justify-center border border-[#E2E4E8]/60 relative">
+                            <img
+                              src={p.image}
+                              alt={p.name}
+                              className="max-h-full max-w-full object-contain"
+                            />
+                            {isSelected && (
+                              <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#005DD6] text-white flex items-center justify-center text-[11px] font-bold">
+                                ✓
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-[#9A9BA1]">
+                            {p.brand}
+                          </div>
+                          <p className="text-[13px] font-medium text-[#111111] line-clamp-2 leading-[17px]">
+                            {p.name}
+                          </p>
+                        </div>
+
+                        <div className="space-y-1.5 pt-1.5 border-t border-[#E2E4E8]/60">
+                          <div className="text-[15px] font-bold text-[#111111]">
+                            {formatBYN(p.price)}
+                          </div>
+                          <button
+                            type="button"
+                            className={`w-full h-[30px] rounded-[8px] text-[12px] font-medium transition-colors ${
+                              isSelected
+                                ? 'bg-[#005DD6] text-white'
+                                : 'bg-[#F4F4F6] text-[#111111] hover:bg-[#EDF4FF]'
+                            }`}
+                          >
+                            {isSelected ? 'Выбран ✓' : 'Выбрать'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={onGoToCatalog}
+                    className="text-[13px] font-medium text-[#005DD6] hover:underline cursor-pointer"
+                  >
+                    Выбрать другой товар в каталоге →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-[14px] p-4 bg-[#F4F4F6] text-[13px] text-[#6E6E73]">
+                Мастер установит ваше оборудование. Перед началом работы проверит комплектацию и совместимость.
+              </div>
+            )}
+
+            {/* Consumables Checkbox */}
+            <div className="rounded-[14px] p-3.5 bg-[#F8FAFC] border border-[#E2E4E8] flex items-center justify-between gap-3">
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <Checkbox
+                  checked={needConsumables}
+                  onUpdate={(val) => setNeedConsumables(val)}
+                  size="l"
+                />
+                <span className="text-[13px] font-medium text-[#111111]">
+                  Базовые монтажные расходники мастера (герметик, прокладки, крепёж)
+                </span>
+              </label>
+              <span className="text-[13px] font-semibold text-[#005DD6] shrink-0">
+                +14,00 руб.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column (4 cols): Order Summary */}
+        <div className="lg:col-span-4 sticky top-24">
+          <div className="bg-white rounded-[20px] p-6 border border-[#E2E4E8] shadow-xs space-y-5">
+            <div>
+              <span className="text-[12px] text-[#6E6E73] block mb-1">Итого к оплате</span>
+              <div className="text-[32px] font-bold text-[#111111] leading-none">
+                {formatBYN(totalOrderPrice)}
+              </div>
+              <div className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#005DD6] bg-[#EDF4FF] px-2.5 py-1 rounded-full mt-2.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#005DD6]" />
+                +{totalBonuses} Б начислим
+              </div>
+            </div>
+
+            {/* Calculation Breakdown */}
+            <div className="space-y-2 text-[13px] border-t border-[#E2E4E8] pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[#6E6E73]">Работа мастера</span>
+                <span className="font-medium text-[#111111]">{formatBYN(service.price)}</span>
+              </div>
+
+              {productSource === 'oma' && attachedProduct && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[#6E6E73] truncate">Товар: {attachedProduct.brand}</span>
+                  <span className="font-medium text-[#111111] shrink-0">
+                    {formatBYN(attachedProduct.price)}
+                  </span>
+                </div>
+              )}
+
+              {needConsumables && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[#6E6E73]">Расходники</span>
+                  <span className="font-medium text-[#111111]">{formatBYN(consumablesPrice)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Action Button */}
             <Button
               view="action"
               size="xl"
               width="max"
-              className="!h-[52px] !rounded-xl !font-semibold !text-base"
-              onClick={() => onStartApplication(service, productSource)}
+              className="!h-[48px] !rounded-[12px] !bg-[#005DD6] hover:!bg-[#004EB8] !text-white !font-medium !text-[15px]"
+              onClick={handleProceed}
             >
-              Заказать · {formatBYN(service.price)}
+              Заказать услугу
             </Button>
-
-            <p className="text-[11px] text-oma-text-secondary text-center leading-relaxed">
-              Стоимость материалов не включена. Дату, время и точный адрес вы укажете на следующем шаге.
-            </p>
           </div>
-        </div>
-      </div>
-
-      {/* 4. FAQ Accordions (Figma 51011:75842) */}
-      <div className="space-y-4 pt-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-oma-text">Частые вопросы</h2>
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-oma-border shadow-sm space-y-3">
-          <Disclosure summary={<span className="text-sm font-semibold text-oma-text">Нужно ли покупать материалы заранее?</span>}>
-            <p className="text-xs text-oma-text-secondary pt-2 leading-relaxed">
-              Вы можете приобрести необходимые товары и расходники в гипермаркетах ОМА или интернет-магазине.
-              Если чего-то не хватит, мастер согласует покупку по чеку.
-            </p>
-          </Disclosure>
-
-          <Disclosure summary={<span className="text-sm font-semibold text-oma-text">Что если понадобятся дополнительные работы?</span>}>
-            <p className="text-xs text-oma-text-secondary pt-2 leading-relaxed">
-              Мастер согласует стоимость дополнительных услуг до начала выполнения. Никаких скрытых платежей:
-              цена фиксируется и не меняется без вашего подтверждения.
-            </p>
-          </Disclosure>
-
-          <Disclosure summary={<span className="text-sm font-semibold text-oma-text">Какая гарантия на выполненные работы?</span>}>
-            <p className="text-xs text-oma-text-secondary pt-2 leading-relaxed">
-              Официальная гарантия сети гипермаркетов ОМА составляет 12 месяцев. В случае неполадок мастер
-              выезжает и устраняет их бесплатно.
-            </p>
-          </Disclosure>
-        </div>
-      </div>
-
-      {/* 5. Advantages (Figma 51011:75934) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white rounded-3xl p-6 border border-oma-border shadow-sm space-y-2">
-          <CircleCheck className="w-5 h-5 text-oma-blue" />
-          <h3 className="text-base font-bold text-oma-text">Проверенные мастера</h3>
-          <p className="text-xs text-oma-text-secondary leading-relaxed">
-            Все мастера проходят аттестацию ОМА, имеют опыт от 5 лет и рейтинг от 4.8.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 border border-oma-border shadow-sm space-y-2">
-          <CircleCheck className="w-5 h-5 text-oma-blue" />
-          <h3 className="text-base font-bold text-oma-text">Фиксированная цена</h3>
-          <p className="text-xs text-oma-text-secondary leading-relaxed">
-            Стоимость услуг зафиксирована в каталоге ОМА и не повышается на месте.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 border border-oma-border shadow-sm space-y-2">
-          <CircleCheck className="w-5 h-5 text-oma-blue" />
-          <h3 className="text-base font-bold text-oma-text">Гарантия 12 месяцев</h3>
-          <p className="text-xs text-oma-text-secondary leading-relaxed">
-            Официальный акт выполненных работ и прямая ответственность сети ОМА.
-          </p>
         </div>
       </div>
     </div>

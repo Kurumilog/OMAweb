@@ -73,7 +73,7 @@ export const Footer: React.FC<FooterProps> = ({
             onClick={onOpenLoyalty}
             className="text-left text-[#6E6E73] hover:text-[#005DD6] transition-colors cursor-pointer"
           >
-            Программа «Баланс»
+            Программа лояльности
           </button>
         </div>
 

@@ -146,12 +146,32 @@
     "description": "Сборка корпусной мебели, подключение кухонной мойки и вытяжки.",
     "icon": "hammer",
     "modes": [
+      "diy",
       "master"
     ],
     "calculator": {
       "type": "none"
     },
-    "bundle": []
+    "bundle": [
+      {
+        "category": "santekhnika",
+        "filter": "мойка кухонная",
+        "productId": "p_293481",
+        "qty": 1
+      },
+      {
+        "category": "santekhnika",
+        "filter": "смеситель для кухни",
+        "productId": "p_1320016",
+        "qty": 1
+      },
+      {
+        "category": "santekhnika",
+        "filter": "шток для выпуска сифона",
+        "productId": "p_1449152",
+        "qty": 1
+      }
+    ]
   },
   {
     "id": "obnovit-vannuyu",
@@ -159,11 +179,31 @@
     "description": "Комплексная замена сантехники: ванна или душевая, унитаз, раковина, смесители и плитка.",
     "icon": "bath",
     "modes": [
+      "diy",
       "master"
     ],
     "calculator": {
       "type": "none"
     },
-    "bundle": []
+    "bundle": [
+      {
+        "category": "santekhnika",
+        "filter": "ванна стальная",
+        "productId": "p_1485725",
+        "qty": 1
+      },
+      {
+        "category": "santekhnika",
+        "filter": "смеситель для ванны",
+        "productId": "p_1427494",
+        "qty": 1
+      },
+      {
+        "category": "santekhnika",
+        "filter": "экран под ванну",
+        "productId": "p_939834",
+        "qty": 1
+      }
+    ]
   }
 ]

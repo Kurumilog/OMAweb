@@ -129,7 +129,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <span className="text-[13px] leading-[18px]">руб.</span>
       </div>
 
-      {/* 5. Скидка и бонусы — Figma node 51011:69044 */}
+      {/* 5. Скидка и кэшбэк — Figma node 51011:69044 */}
       <div className="flex items-start gap-[12px] text-[13px] leading-[18px] whitespace-nowrap">
         {hasDiscount && (
           <span className="text-[#9A9BA1] line-through">
@@ -137,7 +137,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </span>
         )}
         <span className="text-[#005DD6] font-normal">
-          +{bonusPoints} Б
+          4% кэшбэк
         </span>
       </div>
 

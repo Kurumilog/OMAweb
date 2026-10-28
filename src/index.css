@@ -71,11 +71,15 @@
   --g-border-radius-xl: 20px;
 }
 
-/* Fix Gravity UI Button vertical alignment */
+/* Universal Button Text Rendering & Overflow Protection */
 .g-button {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  text-overflow: ellipsis !important;
 }
 
 .g-button__text {
@@ -83,12 +87,37 @@
   align-items: center !important;
   justify-content: center !important;
   line-height: normal !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+.g-button__text > * {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 .g-button__icon {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+button {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+button, .g-button {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {

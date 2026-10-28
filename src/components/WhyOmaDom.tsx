@@ -36,7 +36,7 @@ export const WhyOmaDom: React.FC = () => {
           <div>
             <h3 className="text-sm font-bold text-oma-text mb-1">Бонусы за каждый шаг</h3>
             <p className="text-xs text-oma-text-secondary leading-relaxed">
-              Начисляем 5% за товары и 3% за работу мастера на карту «Баланс».
+              Начисляем 4% за товары и 3% за работу мастера по программе лояльности.
             </p>
           </div>
         </div>

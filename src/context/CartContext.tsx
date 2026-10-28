@@ -2,17 +2,21 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, Service, CartItem } from '../types';
 import servicesData from '../data/services.json';
 import { BONUS_RATE_GOODS, BONUS_RATE_SERVICE, MAX_BONUS_PAY_SHARE } from '../config/loyalty';
+import { resolveServiceForProduct } from '../utils/serviceChecks';
 
 const servicesList = servicesData as Service[];
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product, quantity?: number, withInstallation?: boolean) => void;
+  addToCart: (product: Product, quantity?: number, withInstallation?: boolean | Service) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   toggleInstallation: (productId: string, customService?: Service) => void;
   replaceProductInCart: (oldProductId: string, newProduct: Product) => void;
-  addBundle: (bundleProducts: { product: Product; qty: number; withInstallation?: boolean }[]) => void;
+  addBundle: (
+    bundleProducts: { product: Product; qty: number; withInstallation?: boolean }[],
+    bundleService?: Service | null
+  ) => void;
   clearCart: () => void;
   goodsTotal: number;
   servicesTotal: number;
@@ -48,15 +52,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [items]);
 
-  const addToCart = (product: Product, quantity = 1, withInstallation = false) => {
+  const addToCart = (product: Product, quantity = 1, withInstallation: boolean | Service = false) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
-      const service =
-        withInstallation && product.serviceId
-          ? servicesList.find((s) => s.id === product.serviceId) || servicesList[0]
-          : withInstallation
-          ? servicesList[0]
-          : null;
+
+      let service: Service | null = null;
+      if (typeof withInstallation === 'object' && withInstallation !== null) {
+        service = withInstallation;
+      } else if (withInstallation === true) {
+        service = resolveServiceForProduct(product);
+      }
 
       if (existing) {
         return prev.map((i) =>
@@ -64,7 +69,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             ? {
                 ...i,
                 quantity: i.quantity + quantity,
-                installService: withInstallation ? service || i.installService : i.installService,
+                installService: service || i.installService,
               }
             : i
         );
@@ -96,11 +101,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (i.installService) {
           return { ...i, installService: null };
         }
-        const service =
-          customService ||
-          (i.product.serviceId
-            ? servicesList.find((s) => s.id === i.product.serviceId) || servicesList[0]
-            : servicesList[0]);
+        const service = customService || resolveServiceForProduct(i.product);
         return { ...i, installService: service };
       })
     );
@@ -124,16 +125,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addBundle = (
-    bundleProducts: { product: Product; qty: number; withInstallation?: boolean }[]
+    bundleProducts: { product: Product; qty: number; withInstallation?: boolean }[],
+    bundleService?: Service | null
   ) => {
     setItems((prev) => {
       const next = [...prev];
-      for (const item of bundleProducts) {
+      let assignedBundleService = false;
+
+      for (let i = 0; i < bundleProducts.length; i++) {
+        const item = bundleProducts[i];
         const idx = next.findIndex((p) => p.product.id === item.product.id);
-        const service =
-          item.withInstallation && item.product.serviceId
-            ? servicesList.find((s) => s.id === item.product.serviceId) || null
-            : null;
+
+        let service: Service | null = null;
+        if (item.withInstallation) {
+          if (bundleService && !assignedBundleService) {
+            service = bundleService;
+            assignedBundleService = true;
+          } else if (!bundleService && item.product.serviceId) {
+            service = servicesList.find((s) => s.id === item.product.serviceId) || null;
+          }
+        }
 
         if (idx >= 0) {
           next[idx] = {
@@ -159,10 +170,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const goodsTotal = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
-  const servicesTotal = items.reduce(
-    (sum, i) => sum + (i.installService ? i.installService.price * i.quantity : 0),
-    0
-  );
+  const seenServices = new Set<string>();
+  const servicesTotal = items.reduce((sum, i) => {
+    if (!i.installService) return sum;
+    if (seenServices.has(i.installService.id)) return sum;
+    seenServices.add(i.installService.id);
+    return sum + i.installService.price;
+  }, 0);
 
   const rawTotal = goodsTotal + servicesTotal;
   const maxBonusesAllowed = Math.floor(rawTotal * MAX_BONUS_PAY_SHARE);

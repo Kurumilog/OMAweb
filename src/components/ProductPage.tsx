@@ -339,7 +339,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
               </div>
             )}
             <div className="text-sm font-medium text-oma-blue mt-1">
-              +{productBonuses + serviceBonuses} Б за покупку на карту «Баланс»
+              +{formatBYN(Number(((productTotalPrice * 0.04) + serviceBonuses).toFixed(2)))} кэшбэк на счёт (4%)
             </div>
           </div>
 
@@ -450,7 +450,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                   </div>
 
                   <div className="text-xs text-[#005DD6] font-medium">
-                    +{serviceBonuses} Б за услугу
+                    +{serviceBonuses} руб. кэшбэк за услугу (3%)
                   </div>
 
                   {/* Links: Выбрать дату и время / Нужен замер */}

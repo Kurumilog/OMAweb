@@ -134,7 +134,7 @@ export const Header: React.FC<HeaderProps> = ({
                 activeView === 'loyalty' ? 'font-semibold text-[#005DD6]' : 'text-[#111111]'
               }`}
             >
-              Программа «Баланс»
+              Программа лояльности
             </button>
           </div>
 
@@ -217,14 +217,14 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenLoyalty || onOpenProfile}
-              title="Программа лояльности «Баланс»"
+              title="Программа лояльности"
               className="flex flex-col text-left shrink-0 cursor-pointer group min-w-[64px] md:min-w-[85px]"
             >
               <span className="text-[13px] sm:text-[14px] md:text-[15px] leading-[18px] md:leading-[20px] text-[#111111] group-hover:text-[#005DD6] transition-colors font-normal truncate">
                 {user.name || 'Александр'}
               </span>
               <span className="text-[12px] md:text-[13px] leading-[16px] md:leading-[18px] text-[#005DD6] font-medium">
-                {formatPoints(user.bonusBalance)}
+                {user.bonusBalance} руб. · {user.activityPoints ?? 6} б.
               </span>
             </button>
 
